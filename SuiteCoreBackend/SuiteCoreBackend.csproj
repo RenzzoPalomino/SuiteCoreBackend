@@ -11,8 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SuiteCore.Application\SuiteCore.Application.csproj" />
-    <ProjectReference Include="..\SuiteCore.Infrastructure\SuiteCore.Infrastructure.csproj" />
+    <Folder Include="Models\Entities\" />
+    <Folder Include="Models\Interfaces\" />
+    <Folder Include="Models\DTOs\" />
+    <Folder Include="Services\Interfaces\" />
   </ItemGroup>
 
 </Project>
