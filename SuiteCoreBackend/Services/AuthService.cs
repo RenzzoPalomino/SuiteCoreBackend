@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using SuiteCoreBackend.DTOs.Auth;
+using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Settings;
 
@@ -11,6 +12,7 @@ namespace SuiteCoreBackend.Services;
 public class AuthService : IAuthService
 {
     private readonly ITestUserService _testUserService;
+    private readonly ILdapAuthService   _ldapAuthService;
     private readonly IJwtService _jwtService;
     private readonly JwtSettings _jwtSettings;
 
@@ -22,12 +24,14 @@ public class AuthService : IAuthService
     /// <param name="jwtOptions">Configuración JWT de la aplicación.</param>
     public AuthService(
         ITestUserService testUserService,
+        ILdapAuthService ldapAuthService,
         IJwtService jwtService,
         IOptions<JwtSettings> jwtOptions)
     {
         _testUserService = testUserService;
         _jwtService = jwtService;
         _jwtSettings = jwtOptions.Value;
+        _ldapAuthService = ldapAuthService;
     }
 
     /// <summary>
@@ -37,33 +41,20 @@ public class AuthService : IAuthService
     /// <returns>Datos de sesión del usuario autenticado.</returns>
     public LoginResponseDto? Login(LoginRequestDto request)
     {
-        var user = _testUserService.ValidateCredentials(
-            request.Email,
-            request.Password
-        );
+        LdapUser user = _ldapAuthService.Authenticate(request.Email, request.Password);
 
-        if (user is null || !user.Activo)
+        if (user is null)
         {
             return null;
         }
 
-        var token = _jwtService.GenerateToken(
-            user.Id,
-            user.Email,
-            user.Rol
-        );
+        var token = _jwtService.GenerateToken(user);
 
         return new LoginResponseDto
         {
             Token = token,
             ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiresInMinutes),
-            User = new UserSessionDto
-            {
-                Id = user.Id,
-                NombreCompleto = user.NombreCompleto,
-                Email = user.Email,
-                Rol = user.Rol
-            }
+            User = user
         };
     }
 }

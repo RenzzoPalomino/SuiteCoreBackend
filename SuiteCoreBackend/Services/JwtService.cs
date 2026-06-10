@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Settings;
 using System.IdentityModel.Tokens.Jwt;
@@ -17,22 +18,20 @@ namespace SuiteCoreBackend.Services
             _jwtSettings = jwtOptions.Value;
         }
 
-        public string GenerateToken(Guid userId, string email, string role)
+        public string GenerateToken(LdapUser user)
         {
             var claims = new List<Claim>
             {
-                // Identificador único del usuario
-                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-
-                // Correo del usuario
-                new Claim(ClaimTypes.Email, email),
-
-                // Rol del usuario
-                new Claim(ClaimTypes.Role, role),
-
-                // Identificador único del token
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Name, user.DisplayName),
+                new(ClaimTypes.GivenName, user.FirstName),
+                new("department", user.Department),
+                new("username", user.Username),
             };
+            // Un claim por rol — [Authorize(Roles = "Administradores")] funciona directo
+            foreach (var role in user.Roles)
+                claims.Add(new Claim(ClaimTypes.Role, role));
+
 
             //Convertimos la Key del appsettings en una clave segura, esta clave se usará para firmar el token
             var key = new SymmetricSecurityKey(

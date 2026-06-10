@@ -7,12 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.27" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <Compile Remove="Models\Interfaces\**" />
+    <Content Remove="Models\Interfaces\**" />
+    <EmbeddedResource Remove="Models\Interfaces\**" />
+    <None Remove="Models\Interfaces\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Interfaces\" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.27" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="10.0.9" />
   </ItemGroup>
 
 </Project>

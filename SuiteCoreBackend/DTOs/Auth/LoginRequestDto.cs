@@ -1,9 +1,11 @@
-﻿namespace SuiteCoreBackend.DTOs.Auth
+﻿using SuiteCoreBackend.Models.Entities;
+
+namespace SuiteCoreBackend.DTOs.Auth
 {
     public class LoginResponseDto
     {
         public string Token { get; set; } = string.Empty;
         public DateTime ExpiresAt { get; set; }
-        public UserSessionDto User { get; set; } = new();
+        public LdapUser User { get; set; } = new();
     }
 }

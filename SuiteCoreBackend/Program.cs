@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using SuiteCoreBackend.Services.Interfaces;
+using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services;
+using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Settings;
 using System.Text;
 
@@ -17,15 +18,17 @@ builder.Services.AddSwaggerGen();
 // 2. Leemos la sección "Jwt" desde appsettings.json
 // ---------------------------------------------------------
 var jwtSection = builder.Configuration.GetSection("Jwt");
-// ---------------------------------------------------------
-// 3. Registramos la configuración JWT usando el modelo JwtSettings
-// Esto permite inyectar IOptions<JwtSettings> en servicios futuros
-// ---------------------------------------------------------
 builder.Services.Configure<JwtSettings>(jwtSection);
+
+builder.Services.Configure<LdapSettings>(
+    builder.Configuration.GetSection("Ldap"));
+
+
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ITestUserService, TestUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ILdapAuthService, LdapAuthService>(); /**/
 
 // 4. Convertimos la sección Jwt a un objeto JwtSettings
 // para usar sus valores directamente en Program.cs
