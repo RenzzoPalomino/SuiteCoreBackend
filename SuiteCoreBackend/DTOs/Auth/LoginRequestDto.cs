@@ -6,6 +6,6 @@ namespace SuiteCoreBackend.DTOs.Auth
     {
         public string Token { get; set; } = string.Empty;
         public DateTime ExpiresAt { get; set; }
-        public LdapUser User { get; set; } = new();
+        public LdapUserDto User { get; set; } = new();
     }
 }

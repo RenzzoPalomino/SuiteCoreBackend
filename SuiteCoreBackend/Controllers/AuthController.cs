@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using SuiteCoreBackend.DTOs.Auth;
 using SuiteCoreBackend.Services.Interfaces;
+using System.Diagnostics.Eventing.Reader;
+using System.DirectoryServices.Protocols;
 using System.Security.Claims;
 
 namespace SuiteCoreBackend.Controllers;
@@ -30,34 +32,44 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public IActionResult Login([FromBody] LoginRequestDto request)
     {
-        if (request is null)
+        try
         {
-            return BadRequest(new
+            if (request is null)
             {
-                message = "La solicitud no es válida."
+                return BadRequest(new
+                {
+                    message = "La solicitud no es válida."
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Username) ||
+                string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest(new
+                {
+                    message = "El correo y la contraseña son obligatorios."
+                });
+            }
+
+            var response = _authService.Login(request);
+
+            if (response is null)
+            {
+                return Unauthorized(new
+                {
+                    message = "Credenciales incorrectas o usuario inactivo."
+                });
+            }
+
+            return Ok(response);
+        }
+        catch(Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                message = ex.Message
             });
         }
-
-        if (string.IsNullOrWhiteSpace(request.Email) ||
-            string.IsNullOrWhiteSpace(request.Password))
-        {
-            return BadRequest(new
-            {
-                message = "El correo y la contraseña son obligatorios."
-            });
-        }
-
-        var response = _authService.Login(request);
-
-        if (response is null)
-        {
-            return Unauthorized(new
-            {
-                message = "Credenciales incorrectas o usuario inactivo."
-            });
-        }
-
-        return Ok(response);
     }
 
     /// <summary>

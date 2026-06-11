@@ -1,6 +1,6 @@
 ﻿using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Interfaces;
-namespace SuiteCoreBackend.Services
+namespace SuiteCoreBackend.Services.Implementations
 {
     /// <summary>
     /// Servicio temporal para simular usuarios durante la implementación inicial de autenticación.

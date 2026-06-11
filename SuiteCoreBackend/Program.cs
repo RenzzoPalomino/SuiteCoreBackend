@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using SuiteCoreBackend.Models.Entities;
-using SuiteCoreBackend.Services;
+using SuiteCoreBackend.Services.Implementations;
 using SuiteCoreBackend.Services.Interfaces;
-using SuiteCoreBackend.Settings;
+using SuiteCoreBackend.Settings; 
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<AutoMapperProfile>();
+});
 // ---------------------------------------------------------
 // 2. Leemos la sección "Jwt" desde appsettings.json
 // ---------------------------------------------------------

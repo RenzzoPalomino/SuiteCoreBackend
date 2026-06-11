@@ -5,7 +5,7 @@ namespace SuiteCoreBackend.Services.Interfaces
 {
     public interface ILdapAuthService
     {
-        public LdapUser? Authenticate(string email, string password);
+        public LdapUser? Authenticate(string username, string password);
  
     }
 }

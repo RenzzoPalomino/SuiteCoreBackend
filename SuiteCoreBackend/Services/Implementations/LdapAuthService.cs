@@ -4,7 +4,7 @@ using SuiteCoreBackend.Services.Interfaces;
 using System.Net;
 using System.DirectoryServices.Protocols;
 
-namespace SuiteCoreBackend.Services
+namespace SuiteCoreBackend.Services.Implementations
 {
     public class LdapAuthService : ILdapAuthService
     {
@@ -15,10 +15,10 @@ namespace SuiteCoreBackend.Services
             _settings = settings.Value;
         }
 
-        public LdapUser? Authenticate(string email, string password)
+        public LdapUser? Authenticate(string username, string password)
         {
             var identifier = new LdapDirectoryIdentifier(
-                _settings.Server, _settings.Port, true, false);
+                _settings.Server, _settings.Port, false, false);
 
             using var connection = new LdapConnection(identifier);
             connection.SessionOptions.SecureSocketLayer = _settings.UseSSL;
@@ -29,15 +29,14 @@ namespace SuiteCoreBackend.Services
             try
             {
                 connection.Bind(new NetworkCredential(
-                    _settings.ServiceUser, _settings.ServicePassword));
+                _settings.ServiceUser, _settings.ServicePassword));
 
-                // Pedir todos los atributos necesarios de una sola vez
                 var search = new SearchRequest(
                     _settings.BaseDn,
-                    $"(mail={email})",
-                    System.DirectoryServices.Protocols.SearchScope.Subtree,
+                    $"(uid={username})",
+                    SearchScope.Subtree,
                     "distinguishedName", "displayName", "givenName", "sn",
-                    "mail", "sAMAccountName", "memberOf", "department", "title"
+                    "uid", "uidNumber", "gidNumber", "memberOf", "department", "title"
                 );
 
                 var response = (SearchResponse)connection.SendRequest(search);
@@ -51,8 +50,14 @@ namespace SuiteCoreBackend.Services
                 // Mapear atributos
                 return MapUser(entry);
             }
-            catch (LdapException) { return null; }
-            catch (DirectoryOperationException) { return null; }
+            catch (LdapException ldapex) 
+            {
+                throw new Exception("Servicio LDAP no disponible", ldapex);
+            }
+            catch (DirectoryOperationException){
+                throw new Exception($"No se pudo completar la operación LDAP para el usuario {username}");
+                
+            }
         }
 
         private LdapUser MapUser(SearchResultEntry entry)
@@ -62,24 +67,20 @@ namespace SuiteCoreBackend.Services
                 DisplayName = GetAttr(entry, "displayName"),
                 FirstName = GetAttr(entry, "givenName"),
                 LastName = GetAttr(entry, "sn"),
-                Email = GetAttr(entry, "mail"),
-                Username = GetAttr(entry, "sAMAccountName"),
+                Username = GetAttr(entry, "uid"),
+                UidNumber = GetAttr(entry, "uidNumber"),
+                GidNumber = GetAttr(entry, "gidNumber"),
                 Department = GetAttr(entry, "department"),
                 Title = GetAttr(entry, "title"),
             };
 
-            // memberOf devuelve los DNs completos de cada grupo
-            // ej: "CN=Administradores,OU=Grupos,DC=empresa,DC=com"
             if (entry.Attributes["memberOf"] != null)
             {
                 foreach (var groupDn in entry.Attributes["memberOf"].GetValues(typeof(string)))
                 {
                     var dn = groupDn.ToString()!;
                     user.Groups.Add(dn);
-
-                    // Extraer solo el CN como nombre de rol
-                    var cn = dn.Split(',')[0].Replace("CN=", "").Trim();
-                    user.Roles.Add(cn);
+                    user.Roles.Add(dn.Split(',')[0].Replace("CN=", "").Trim());
                 }
             }
 

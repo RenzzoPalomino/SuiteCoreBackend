@@ -1,10 +1,11 @@
-﻿using Microsoft.Extensions.Options;
+﻿using AutoMapper;
+using Microsoft.Extensions.Options;
 using SuiteCoreBackend.DTOs.Auth;
 using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Settings;
 
-namespace SuiteCoreBackend.Services;
+namespace SuiteCoreBackend.Services.Implementations;
 
 /// <summary>
 /// Servicio encargado de validar credenciales y generar sesiones JWT.
@@ -15,6 +16,7 @@ public class AuthService : IAuthService
     private readonly ILdapAuthService   _ldapAuthService;
     private readonly IJwtService _jwtService;
     private readonly JwtSettings _jwtSettings;
+    private readonly IMapper _mapper;
 
     /// <summary>
     /// Inicializa el servicio de autenticación.
@@ -26,12 +28,14 @@ public class AuthService : IAuthService
         ITestUserService testUserService,
         ILdapAuthService ldapAuthService,
         IJwtService jwtService,
-        IOptions<JwtSettings> jwtOptions)
+        IOptions<JwtSettings> jwtOptions
+        ,IMapper mapper)
     {
         _testUserService = testUserService;
         _jwtService = jwtService;
         _jwtSettings = jwtOptions.Value;
         _ldapAuthService = ldapAuthService;
+        _mapper = mapper;
     }
 
     /// <summary>
@@ -41,7 +45,7 @@ public class AuthService : IAuthService
     /// <returns>Datos de sesión del usuario autenticado.</returns>
     public LoginResponseDto? Login(LoginRequestDto request)
     {
-        LdapUser user = _ldapAuthService.Authenticate(request.Email, request.Password);
+        LdapUser user = _ldapAuthService.Authenticate(request.Username, request.Password);
 
         if (user is null)
         {
@@ -50,11 +54,13 @@ public class AuthService : IAuthService
 
         var token = _jwtService.GenerateToken(user);
 
+        LdapUserDto userDto = _mapper.Map<LdapUserDto>(user);
+
         return new LoginResponseDto
         {
             Token = token,
             ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiresInMinutes),
-            User = user
+            User = userDto
         };
     }
 }

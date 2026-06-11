@@ -7,7 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace SuiteCoreBackend.Services
+namespace SuiteCoreBackend.Services.Implementations
 {
     public class JwtService : IJwtService
     {
@@ -22,7 +22,7 @@ namespace SuiteCoreBackend.Services
         {
             var claims = new List<Claim>
             {
-                new(ClaimTypes.Email, user.Email),
+                //new(ClaimTypes.Email, user.Email),
                 new(ClaimTypes.Name, user.DisplayName),
                 new(ClaimTypes.GivenName, user.FirstName),
                 new("department", user.Department),
