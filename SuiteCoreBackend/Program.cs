@@ -4,6 +4,7 @@ using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Services;
 using SuiteCoreBackend.Settings;
 using System.Text;
+using SuiteCoreBackend.Services.Monitoring;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,7 @@ builder.Services.Configure<JwtSettings>(jwtSection);
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ITestUserService, TestUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
 
 // 4. Convertimos la sección Jwt a un objeto JwtSettings
 // para usar sus valores directamente en Program.cs
