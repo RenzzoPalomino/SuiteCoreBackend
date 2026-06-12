@@ -1,6 +1,8 @@
-﻿namespace SuiteCoreBackend.Services.Interfaces
+﻿using SuiteCoreBackend.DTOs.Monitoring;
+
+namespace SuiteCoreBackend.Services.Interfaces;
+
+public interface IGrafanaService
 {
-    public class IGrafanaService
-    {
-    }
+    Task<IEnumerable<GrafanaPanelDto>> GetPanelsAsync();
 }

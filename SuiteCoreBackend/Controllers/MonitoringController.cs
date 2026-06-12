@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SuiteCoreBackend.Services.Interfaces;
+using SuiteCoreBackend.Services.Monitoring;
 
 namespace SuiteCoreBackend.Controllers;
 
@@ -8,16 +10,27 @@ namespace SuiteCoreBackend.Controllers;
 public class MonitoringController : ControllerBase
 {
     private readonly ILibreNmsService _service;
+    private readonly IGrafanaService _grafanaService;
 
-    public MonitoringController(ILibreNmsService service)
+    public MonitoringController(ILibreNmsService service, IGrafanaService grafanaService)
     {
         _service = service;
+        _grafanaService = grafanaService;
     }
 
     [HttpGet("device-types")]
+    [Authorize]
     public async Task<IActionResult> GetDeviceTypes()
     {
         var result = await _service.GetDeviceTypesAsync();
+        return Ok(result);
+    }
+
+    [HttpGet("grafana-panels")]
+    [Authorize]
+    public async Task<IActionResult> GetGrafanaPanels()
+    {
+        var result = await _grafanaService.GetPanelsAsync();
         return Ok(result);
     }
 }

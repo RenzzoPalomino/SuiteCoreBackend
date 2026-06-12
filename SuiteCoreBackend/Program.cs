@@ -28,6 +28,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ITestUserService, TestUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
+builder.Services.AddScoped<IGrafanaService, GrafanaService>();
 
 // 4. Convertimos la sección Jwt a un objeto JwtSettings
 // para usar sus valores directamente en Program.cs
