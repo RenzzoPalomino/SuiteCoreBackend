@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using SuiteCoreBackend.Models.Entities;
+using SuiteCoreBackend.Services.Implementations;
 using SuiteCoreBackend.Services.Interfaces;
-using SuiteCoreBackend.Services;
-using SuiteCoreBackend.Settings;
+using SuiteCoreBackend.Settings; 
 using System.Text;
 using SuiteCoreBackend.Services.Monitoring;
 
@@ -14,19 +16,25 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<AutoMapperProfile>();
+});
 // ---------------------------------------------------------
 // 2. Leemos la sección "Jwt" desde appsettings.json
 // ---------------------------------------------------------
 var jwtSection = builder.Configuration.GetSection("Jwt");
-// ---------------------------------------------------------
-// 3. Registramos la configuración JWT usando el modelo JwtSettings
-// Esto permite inyectar IOptions<JwtSettings> en servicios futuros
-// ---------------------------------------------------------
 builder.Services.Configure<JwtSettings>(jwtSection);
+
+builder.Services.Configure<LdapSettings>(
+    builder.Configuration.GetSection("Ldap"));
+
+
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ITestUserService, TestUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ILdapAuthService, LdapAuthService>(); /**/
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
 
