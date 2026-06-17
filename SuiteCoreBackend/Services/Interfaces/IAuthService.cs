@@ -12,6 +12,7 @@ namespace SuiteCoreBackend.Services.Interfaces
         /// </summary>
         /// <param name="request">Credenciales de acceso.</param>
         /// <returns>Respuesta de autenticación o null si no se pudo autenticar.</returns>
-        LoginResponseDto? Login(LoginRequestDto request);
+        Task<LoginResponseDto?> LoginAsync(LoginRequestDto request, string clientIp);
+        Task LogoutAsync(string sessionId, string username);
     }
 }

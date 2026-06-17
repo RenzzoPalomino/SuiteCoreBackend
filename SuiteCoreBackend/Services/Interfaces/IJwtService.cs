@@ -9,6 +9,6 @@ namespace SuiteCoreBackend.Services.Interfaces
         /// </summary>
         /// <param name="userId">Usuario LDAP.</param> 
         /// <returns>Token JWT firmado.</returns>
-        string GenerateToken(LdapUser user);
+        string GenerateToken(LdapUser user, string sessionId);
     }
 }

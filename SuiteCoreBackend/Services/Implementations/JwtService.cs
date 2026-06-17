@@ -18,7 +18,7 @@ namespace SuiteCoreBackend.Services.Implementations
             _jwtSettings = jwtOptions.Value;
         }
 
-        public string GenerateToken(LdapUser user)
+        public string GenerateToken(LdapUser user, string sessionId)
         {
             var claims = new List<Claim>
             {
@@ -27,6 +27,7 @@ namespace SuiteCoreBackend.Services.Implementations
                 new(ClaimTypes.GivenName, user.FirstName),
                 new("department", user.Department),
                 new("username", user.Username),
+                new("sessionId", sessionId),
             };
             // Un claim por rol — [Authorize(Roles = "Administradores")] funciona directo
             foreach (var role in user.Roles)

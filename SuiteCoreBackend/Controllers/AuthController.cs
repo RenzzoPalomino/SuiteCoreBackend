@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SuiteCoreBackend.DTOs.Auth;
 using SuiteCoreBackend.Services.Interfaces;
-using System.Diagnostics.Eventing.Reader;
-using System.DirectoryServices.Protocols;
 using System.Security.Claims;
 
 namespace SuiteCoreBackend.Controllers;
@@ -14,68 +12,50 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
 
-    /// <summary>
-    /// Inicializa el controlador de autenticación.
-    /// </summary>
-    /// <param name="authService">Servicio de autenticación.</param>
     public AuthController(IAuthService authService)
     {
         _authService = authService;
     }
 
-    /// <summary>
-    /// Valida las credenciales del usuario y devuelve un token JWT.
-    /// </summary>
-    /// <param name="request">Credenciales de acceso.</param>
-    /// <returns>Datos de sesión del usuario autenticado.</returns>
     [HttpPost("login")]
     [AllowAnonymous]
-    public IActionResult Login([FromBody] LoginRequestDto request)
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
         try
         {
             if (request is null)
-            {
-                return BadRequest(new
-                {
-                    message = "La solicitud no es válida."
-                });
-            }
+                return BadRequest(new { message = "La solicitud no es válida." });
 
-            if (string.IsNullOrWhiteSpace(request.Username) ||
-                string.IsNullOrWhiteSpace(request.Password))
-            {
-                return BadRequest(new
-                {
-                    message = "El correo y la contraseña son obligatorios."
-                });
-            }
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest(new { message = "El correo y la contraseña son obligatorios." });
 
-            var response = _authService.Login(request);
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "0.0.0.0";
+            var response = await _authService.LoginAsync(request, clientIp);
 
             if (response is null)
-            {
-                return Unauthorized(new
-                {
-                    message = "Credenciales incorrectas o usuario inactivo."
-                });
-            }
+                return Unauthorized(new { message = "Credenciales incorrectas o usuario inactivo." });
 
             return Ok(response);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            return StatusCode(500, new
-            {
-                message = ex.Message
-            });
+            return StatusCode(500, new { message = ex.Message });
         }
     }
 
-    /// <summary>
-    /// Obtiene los datos principales del usuario autenticado desde el token JWT.
-    /// </summary>
-    /// <returns>Información básica del usuario autenticado.</returns>
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout()
+    {
+        var sessionId = User.FindFirst("sessionId")?.Value;
+        var username = User.FindFirst("username")?.Value;
+
+        if (!string.IsNullOrEmpty(sessionId) && !string.IsNullOrEmpty(username))
+            await _authService.LogoutAsync(sessionId, username);
+
+        return Ok(new { message = "Sesión cerrada correctamente." });
+    }
+
     [HttpGet("me")]
     [Authorize]
     public IActionResult Me()
@@ -92,17 +72,10 @@ public class AuthController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Valida el acceso a un endpoint exclusivo para administradores.
-    /// </summary>
-    /// <returns>Mensaje de confirmación de acceso administrativo.</returns>
     [HttpGet("admin")]
     [Authorize(Roles = "Administrador")]
     public IActionResult AdminOnly()
     {
-        return Ok(new
-        {
-            message = "Acceso permitido solo para Administradores."
-        });
+        return Ok(new { message = "Acceso permitido solo para Administradores." });
     }
 }

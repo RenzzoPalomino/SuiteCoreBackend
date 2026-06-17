@@ -2,10 +2,9 @@
 
 namespace SuiteCoreBackend.DTOs.Auth
 {
-    public class LoginResponseDto
+    public class LoginRequestDto
     {
-        public string Token { get; set; } = string.Empty;
-        public DateTime ExpiresAt { get; set; }
-        public LdapUserDto User { get; set; } = new();
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }
