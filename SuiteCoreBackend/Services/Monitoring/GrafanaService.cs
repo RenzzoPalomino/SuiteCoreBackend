@@ -1,18 +1,19 @@
-using Microsoft.EntityFrameworkCore;
 using SuiteCoreBackend.DTOs.Monitoring;
-using SuiteCoreBackend.Infraestucture.Context;
+using SuiteCoreBackend.Infrastructure.Context;
+using SuiteCoreBackend.Infrastructure.Interfaces;
 using SuiteCoreBackend.Services.Interfaces;
 
 namespace SuiteCoreBackend.Services.Monitoring;
 
 public class GrafanaService : IGrafanaService
 {
-    private readonly SCDbContext _context;
+    
     private readonly IConfiguration _config;
+    private readonly IGrafanaRepository _grafanaRepository;
 
-    public GrafanaService(SCDbContext context, IConfiguration config)
+    public GrafanaService(IGrafanaRepository grafanarepo, IConfiguration config)
     {
-        _context = context;
+        _grafanaRepository = grafanarepo;
         _config = config;
     }
 
@@ -20,7 +21,7 @@ public class GrafanaService : IGrafanaService
     {
         var grafanaUrl = _config["Grafana:Url"];
 
-        var panels = await _context.GrafanaPanels.ToListAsync();
+        var panels = await _grafanaRepository.GetAll();
 
         return panels.Select(p => new GrafanaPanelDto
         {

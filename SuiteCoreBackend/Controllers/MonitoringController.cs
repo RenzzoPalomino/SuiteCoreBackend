@@ -19,7 +19,7 @@ public class MonitoringController : ControllerBase
     }
 
     [HttpGet("device-types")]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> GetDeviceTypes()
     {
         var result = await _service.GetDeviceTypesAsync();

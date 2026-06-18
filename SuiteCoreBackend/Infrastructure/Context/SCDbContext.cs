@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SuiteCoreBackend.Models.Entities;
 
-namespace SuiteCoreBackend.Infraestucture.Context
+namespace SuiteCoreBackend.Infrastructure.Context
 {
     public class SCDbContext : DbContext
     {

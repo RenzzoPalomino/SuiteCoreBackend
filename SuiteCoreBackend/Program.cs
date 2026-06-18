@@ -1,14 +1,15 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
+ using Microsoft.IdentityModel.Tokens;
 using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Implementations;
 using SuiteCoreBackend.Services.Interfaces;
+using SuiteCoreBackend.Services.Monitoring;
+using SuiteCoreBackend.Infrastructure.Interfaces;
+using SuiteCoreBackend.Infrastructure.Implementations;
 using SuiteCoreBackend.Settings; 
 using System.Text;
-using SuiteCoreBackend.Services.Monitoring;
 using Microsoft.EntityFrameworkCore;
-using SuiteCoreBackend.Infraestucture.Context;
+using SuiteCoreBackend.Infrastructure.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILdapAuthService, LdapAuthService>(); /**/
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
+builder.Services.AddScoped<IGrafanaRepository, GrafanaRepository>();
 
 // 4. Convertimos la sección Jwt a un objeto JwtSettings
 // para usar sus valores directamente en Program.cs
