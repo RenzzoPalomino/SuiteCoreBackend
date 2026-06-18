@@ -27,7 +27,6 @@ public class MonitoringController : ControllerBase
     }
 
     [HttpGet("grafana-panels")]
-    [Authorize]
     public async Task<IActionResult> GetGrafanaPanels()
     {
         var result = await _grafanaService.GetPanelsAsync();

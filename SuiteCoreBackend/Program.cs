@@ -7,6 +7,8 @@ using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Settings; 
 using System.Text;
 using SuiteCoreBackend.Services.Monitoring;
+using Microsoft.EntityFrameworkCore;
+using SuiteCoreBackend.Infraestucture.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,8 +22,11 @@ builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<AutoMapperProfile>();
 });
+
+builder.Services.AddDbContext<SCDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 // ---------------------------------------------------------
-// 2. Leemos la secciÛn "Jwt" desde appsettings.json
+// 2. Leemos la secci√≥n "Jwt" desde appsettings.json
 // ---------------------------------------------------------
 var jwtSection = builder.Configuration.GetSection("Jwt");
 builder.Services.Configure<JwtSettings>(jwtSection);
@@ -38,7 +43,7 @@ builder.Services.AddScoped<ILdapAuthService, LdapAuthService>(); /**/
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
 
-// 4. Convertimos la secciÛn Jwt a un objeto JwtSettings
+// 4. Convertimos la secci√≥n Jwt a un objeto JwtSettings
 // para usar sus valores directamente en Program.cs
 // ---------------------------------------------------------
 
@@ -46,16 +51,16 @@ var jwtSettings = jwtSection.Get<JwtSettings>();
 
 if (jwtSettings is null)
 {
-    throw new Exception("La configuraciÛn JWT no fue encontrada en appsettings.json.");
+    throw new Exception("La configuraci√≥n JWT no fue encontrada en appsettings.json.");
 }
 
 if (string.IsNullOrWhiteSpace(jwtSettings.Key))
 {
-    throw new Exception("La clave JWT no puede estar vacÌa.");
+    throw new Exception("La clave JWT no puede estar vac√≠a.");
 }
 // ---------------------------------------------------------
-// 5. Configuramos la autenticaciÛn con JWT Bearer
-// AquÌ indicamos cÛmo la API debe validar los tokens recibidos
+// 5. Configuramos la autenticaci√≥n con JWT Bearer
+// Aqu√≠ indicamos c√≥mo la API debe validar los tokens recibidos
 // ---------------------------------------------------------
 
 builder.Services
@@ -69,18 +74,18 @@ builder.Services
     })
     .AddJwtBearer(options =>
     {
-        // Par·metros de validaciÛn del token JWT
+        // Par√°metros de validaci√≥n del token JWT
         options.TokenValidationParameters = new TokenValidationParameters
         {
             // Valida que el token haya sido emitido por nuestro issuer
             ValidateIssuer = true,
             ValidIssuer = jwtSettings.Issuer,
 
-            // Valida que el token estÈ dirigido a nuestra audiencia esperada
+            // Valida que el token est√© dirigido a nuestra audiencia esperada
             ValidateAudience = true,
             ValidAudience = jwtSettings.Audience,
 
-            // Valida que el token no estÈ vencido
+            // Valida que el token no est√© vencido
             ValidateLifetime = true,
 
             // Valida la clave con la que fue firmado el token
@@ -91,13 +96,13 @@ builder.Services
                 Encoding.UTF8.GetBytes(jwtSettings.Key)
             ),
 
-            // Elimina margen extra de expiraciÛn
+            // Elimina margen extra de expiraci√≥n
             // Por defecto .NET da unos minutos adicionales
             ClockSkew = TimeSpan.Zero
         };
     });
 // ---------------------------------------------------------
-// 6. Agregamos autorizaciÛn
+// 6. Agregamos autorizaci√≥n
 // Esto permite usar [Authorize] en controllers y endpoints
 // ---------------------------------------------------------
 builder.Services.AddAuthorization();
@@ -116,12 +121,12 @@ if (app.Environment.IsDevelopment())
 // ---------------------------------------------------------
 app.UseHttpsRedirection();
 // ---------------------------------------------------------
-// 9. Activamos autenticaciÛn
+// 9. Activamos autenticaci√≥n
 // IMPORTANTE: debe ir antes de UseAuthorization()
 // ---------------------------------------------------------
 app.UseAuthentication();
 // ---------------------------------------------------------
-// 10. Activamos autorizaciÛn
+// 10. Activamos autorizaci√≥n
 // Esto valida permisos, roles y endpoints protegidos
 // ---------------------------------------------------------
 app.UseAuthorization();
@@ -130,6 +135,6 @@ app.UseAuthorization();
 // ---------------------------------------------------------
 app.MapControllers();
 // ---------------------------------------------------------
-// 12. Ejecutamos la aplicaciÛn
+// 12. Ejecutamos la aplicaci√≥n
 // ---------------------------------------------------------
 app.Run();
