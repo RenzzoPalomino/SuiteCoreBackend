@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
  using Microsoft.IdentityModel.Tokens;
+using SuiteCoreBackend.Helpers;
+using SuiteCoreBackend.Infrastructure.Context;
+using SuiteCoreBackend.Infrastructure.Implementations;
+using SuiteCoreBackend.Infrastructure.Interfaces;
 using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Implementations;
 using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Services.Monitoring;
-using SuiteCoreBackend.Infrastructure.Interfaces;
-using SuiteCoreBackend.Infrastructure.Implementations;
 using SuiteCoreBackend.Settings; 
 using System.Text;
-using Microsoft.EntityFrameworkCore;
-using SuiteCoreBackend.Infrastructure.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,14 +42,14 @@ builder.Services.Configure<RadiusSettings>(
 
 
 builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<ITestUserService, TestUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILdapAuthService, LdapAuthService>();
 builder.Services.AddScoped<IRadiusSessionService, RadiusSessionService>();
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
 builder.Services.AddScoped<IGrafanaRepository, GrafanaRepository>();
-
+builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
+ 
 // 4. Convertimos la sección Jwt a un objeto JwtSettings
 // para usar sus valores directamente en Program.cs
 // ---------------------------------------------------------

@@ -5,81 +5,109 @@
 - **.NET 8.0** — ASP.NET Core Web API
 - **Autenticación:** JWT Bearer (Microsoft.AspNetCore.Authentication.JwtBearer v8.0.27)
 - **LDAP/Active Directory:** System.DirectoryServices.Protocols v10.0.9
-- **Sesiones RADIUS:** Flexinets.Radius.Core + Flexinets.Radius.RadiusClient (Accounting Start/Stop)
+- **Sesiones RADIUS:** Flexinets.Radius.Core + Flexinets.Radius.RadiusClient (Accounting Start/Stop) — suspendido temporalmente, sesiones manejadas por DB propia
+- **ORM/DB:** Entity Framework Core 8.0.8 + Npgsql.EntityFrameworkCore.PostgreSQL 8.0.4 (PostgreSQL en `172.16.20.15`)
 - **Documentación API:** Swagger/OpenAPI via Swashbuckle.AspNetCore v6.6.2
-- **ORM/DB:** SCDbContext preparado (Entity Framework, sin configurar aún)
 
 ## Arquitectura
 
 N-Tier (capas) con inyección de dependencias:
 
 ```
-Controllers  →  Services (Interfaces)  →  Infrastructure (Context)
+Controllers  →  Services (Interfaces)  →  Infrastructure (Repositories)
+                     ↑                            ↑
+              Models / DTOs / Settings       SCDbContext (PostgreSQL)
                      ↑
-              Models / DTOs / Settings
+                  Helpers/
 ```
 
-Todas las interfaces de servicio se registran como **Scoped** en el contenedor DI.
+Todas las interfaces de servicio y repositorio se registran como **Scoped** en el contenedor DI.
 
 ## Estructura de Directorios
 
 ```
 SuiteCoreBackend/
-├── Controllers/            # Endpoints HTTP
-│   └── AuthController.cs   # Login, /me, /admin
-├── DTOs/Auth/              # Contratos de entrada/salida de la API
-├── Models/Entities/        # Entidades de dominio
-├── Services/               # Lógica de negocio
-│   └── Interfaces/         # Contratos de servicio
-├── Settings/               # Clases de configuración fuertemente tipadas
-├── Infrastructure/Context/ # SCDbContext (placeholder, aún vacío)
-└── Program.cs              # Startup, DI, middleware pipeline
+├── Controllers/                    # Endpoints HTTP
+│   ├── AuthController.cs           # Login, Logout, /me, /admin
+│   └── MonitoringController.cs     # Tipos de dispositivo, paneles Grafana
+├── DTOs/
+│   ├── Auth/                       # LoginRequestDto, LoginResponseDto, LdapUserDto
+│   └── Monitoring/                 # DeviceTypeDto, GrafanaPanelDto
+├── Helpers/
+│   └── DateTimeHelper.cs           # Utilidad de zona horaria (Perú)
+├── Models/Entities/                # Entidades de dominio
+│   ├── LdapUser.cs
+│   ├── GrafanaPanel.cs             # Tabla grafanapanels en PostgreSQL
+│   └── UserActivity.cs             # Tabla useractivities — registro de sesiones web
+├── Services/
+│   ├── Interfaces/                 # Contratos de servicio
+│   └── Implementations/            # Lógica de negocio
+│   └── Monitoring/                 # GrafanaService, LibreNmsService
+├── Infrastructure/
+│   ├── Context/SCDbContext.cs      # DbContext con GrafanaPanels y UserActivities
+│   ├── Interfaces/                 # IGrafanaRepository, IUserActivityRepository
+│   └── Implementations/            # GrafanaRepository, UserActivityRepository
+├── Settings/                       # Clases de configuración fuertemente tipadas
+└── Program.cs                      # Startup, DI, middleware pipeline
 ```
 
 ## Endpoints
 
-| Método | Ruta              | Auth                    | Descripción                    |
-|--------|-------------------|-------------------------|--------------------------------|
-| POST   | /api/auth/login   | Anónimo                 | Login con usuario/contraseña   |
-| POST   | /api/auth/logout  | [Authorize]             | Cierra sesión (RADIUS Stop)    |
-| GET    | /api/auth/me      | [Authorize]             | Datos del usuario autenticado  |
-| GET    | /api/auth/admin   | [Authorize(Rol=Admin)]  | Solo Administradores           |
-| GET    | /weatherforecast  | Ninguna                 | Endpoint de prueba (scaffold)  |
+| Método | Ruta                          | Auth                   | Descripción                          |
+|--------|-------------------------------|------------------------|--------------------------------------|
+| POST   | /api/auth/login               | Anónimo                | Login LDAP → JWT + registro sesión   |
+| POST   | /api/auth/logout              | [Authorize]            | Cierra sesión                        |
+| GET    | /api/auth/me                  | [Authorize]            | Datos del usuario autenticado        |
+| GET    | /api/auth/admin               | [Authorize(Rol=Admin)] | Solo Administradores                 |
+| GET    | /api/monitoring/device-types  | (temporalmente abierto)| Tipos de dispositivo LibreNMS        |
+| GET    | /api/monitoring/grafana-panels| (temporalmente abierto)| Paneles Grafana desde DB             |
+| GET    | /weatherforecast              | Ninguna                | Endpoint de prueba (scaffold)        |
 
 ## Flujo de Autenticación
 
 ```
 POST /api/auth/login
   → AuthService.LoginAsync(request, clientIp)
-      → LdapAuthService.Authenticate()        # Bind de servicio → búsqueda → bind de usuario
+      → LdapAuthService.Authenticate()           # Bind servicio → búsqueda → bind usuario
           # 1. Bind con cuenta de servicio
           # 2. Busca usuario por uid
           # 3. Bind con credenciales del usuario
           # 4. Extrae atributos y grupos → LdapUser
-      → RadiusSessionService.StartSessionAsync()  # Accounting-Start → RADIUS puerto 1813
-          # Genera SessionId (GUID 16 chars)
-          # Si RADIUS falla, loguea warning pero NO bloquea el login
-      → JwtService.GenerateToken(user, sessionId)  # JWT HS256 con sessionId como claim
+      → generateIdSession()                      # SessionId = GUID 16 chars en AuthService
+      → UserActivityRepository.RegisterLogin()   # INSERT en useractivities (PostgreSQL)
+          # SessionId, Username, IpAddress, StartedAt, EndedAt, LastActivityAt
+      → [RADIUS suspendido] RadiusSessionService.StartSessionAsync()
+      → JwtService.GenerateToken(user, sessionId) # JWT HS256 con sessionId como claim
   ← LoginResponseDto { Token, ExpiresAt, User, SessionId }
 
 POST /api/auth/logout
   → Extrae sessionId y username del JWT
   → AuthService.LogoutAsync(sessionId, username)
-      → RadiusSessionService.StopSessionAsync()   # Accounting-Stop → RADIUS puerto 1813
+      → RadiusSessionService.StopSessionAsync()  # Accounting-Stop (aún activo en código)
   ← 200 OK
 ```
+
+**Nota sobre RADIUS:** RADIUS en la infraestructura del cliente se usa exclusivamente para autenticar accesos a equipos de red y SSH a servidores — no para sesiones de aplicaciones web. Las sesiones del Dashboard se trackean en la tabla `useractivities` de PostgreSQL.
 
 El token JWT incluye los claims: `name`, `givenName`, `department`, `username`, `sessionId`, y roles extraídos del atributo `memberOf` de LDAP.
 
 ## Servicios
 
-| Interfaz                | Implementación         | Propósito                                               |
-|-------------------------|------------------------|---------------------------------------------------------|
-| IAuthService            | AuthService            | Orquesta el flujo login LDAP → RADIUS → JWT             |
-| IJwtService             | JwtService             | Genera tokens JWT HS256 (incluye sessionId como claim)  |
-| ILdapAuthService        | LdapAuthService        | Autenticación y lectura de atributos LDAP/AD            |
-| IRadiusSessionService   | RadiusSessionService   | Accounting Start/Stop contra servidor RADIUS            |
-| ITestUserService        | TestUserService        | Usuarios de prueba hardcodeados (no usado en prod)      |
+| Interfaz                | Implementación         | Propósito                                                      |
+|-------------------------|------------------------|----------------------------------------------------------------|
+| IAuthService            | AuthService            | Orquesta flujo login LDAP → SessionId → UserActivity → JWT    |
+| IJwtService             | JwtService             | Genera tokens JWT HS256 (incluye sessionId como claim)         |
+| ILdapAuthService        | LdapAuthService        | Autenticación y lectura de atributos LDAP/AD                   |
+| IRadiusSessionService   | RadiusSessionService   | Accounting Start/Stop contra RADIUS (suspendido en login)      |
+| IGrafanaService         | GrafanaService         | Construye URLs de paneles Grafana consultando DB               |
+| ILibreNmsService        | LibreNmsService        | Consulta dispositivos desde LibreNMS vía HTTP                  |
+
+## Repositorios (Infrastructure)
+
+| Interfaz                  | Implementación           | Propósito                                          |
+|---------------------------|--------------------------|----------------------------------------------------|
+| IGrafanaRepository        | GrafanaRepository        | CRUD sobre tabla `grafanapanels`                   |
+| IUserActivityRepository   | UserActivityRepository   | Registro de sesiones web en tabla `useractivities` |
 
 ## Modelos Principales
 
@@ -89,6 +117,13 @@ El token JWT incluye los claims: `name`, `givenName`, `department`, `username`, 
 - `Groups: List<string>` — DNs de grupos
 - `Roles: List<string>` — extraídos de los CN de grupos
 
+**GrafanaPanel** — entidad DB (`grafanapanels`):
+- `Id`, `Name`, `DashboardUid`, `PanelId`
+
+**UserActivity** — entidad DB (`useractivities`), sesiones web activas:
+- `SessionId`, `Username`, `IpAddress`
+- `StartedAt`, `EndedAt`, `LastActivityAt`
+
 **LdapSettings** (appsettings.json `Ldap:*`):
 - `Server`, `Port`, `UseSSL`, `BaseDn`, `ServiceUser`, `ServicePassword`
 
@@ -96,7 +131,7 @@ El token JWT incluye los claims: `name`, `givenName`, `department`, `username`, 
 - `Key`, `Issuer` (`SuiteCoreApi`), `Audience` (`SuiteCoreFrontend`), `ExpiresInMinutes` (120)
 
 **RadiusSettings** (appsettings.json `Radius:*`):
-- `Server` (IP del servidor RADIUS: `172.16.20.12`), `AccountingPort` (1813), `SharedSecret`, `TimeoutMs` (5000)
+- `Server` (`172.16.20.12`), `AccountingPort` (1813), `SharedSecret`, `TimeoutMs` (5000)
 
 ## Configuración
 
@@ -105,18 +140,15 @@ Los valores sensibles viven en `appsettings.json` (no commitear en prod):
 - Credenciales de cuenta de servicio LDAP
 - IP del servidor LDAP: `172.16.20.17`
 - IP del servidor RADIUS: `172.16.20.12`
+- Connection string PostgreSQL: `Host=172.16.20.15;Database=SuiteCore;Username=admin;Password=suitecore123$`
 
 Las clases de configuración son: `JwtSettings`, `LdapSettings` y `RadiusSettings`, leídas con el patrón `IOptions<T>`.
 
-## Usuarios de Prueba (TestUserService)
+## Helpers
 
-Solo para desarrollo local — no están integrados en el flujo principal:
-
-| Email                       | Password | Rol           | Activo |
-|-----------------------------|----------|---------------|--------|
-| admin@suitecore.com         | 123456   | Administrador | true   |
-| asesor@suitecore.com        | 123456   | Asesor        | true   |
-| inactivo@suitecore.com      | 123456   | Asesor        | false  |
+**DateTimeHelper** (`Helpers/DateTimeHelper.cs`):
+- `GetPeruDateTime()` — retorna `DateTime` en zona horaria `SA Pacific Standard Time` (UTC-5)
+- Usado en `AuthService` para registrar `StartedAt` y `LastActivityAt` en hora local Perú
 
 ## Middleware Pipeline (Orden)
 
@@ -129,17 +161,26 @@ Solo para desarrollo local — no están integrados en el flujo principal:
 ## Convenciones del Proyecto
 
 - Nombres de propiedades en inglés, comentarios en español
-- Interfaces con prefijo `I` en carpeta `Services/Interfaces/`
+- Interfaces de servicio con prefijo `I` en `Services/Interfaces/`
+- Interfaces de repositorio con prefijo `I` en `Infrastructure/Interfaces/`
 - DTOs agrupados por feature bajo `DTOs/<Feature>/`
 - Entidades bajo `Models/Entities/`
-- Tiempo de vida de servicios: `Scoped` por convención
+- Helpers estáticos bajo `Helpers/`
+- Tiempo de vida de servicios y repositorios: `Scoped` por convención
 - Validación JWT sin `ClockSkew` (tolerancia cero)
+- Columnas de DB en minúsculas (`[Column("name")]`), tablas en minúsculas (`[Table("grafanapanels")]`)
 
 ## Estado Actual del Proyecto
 
 - **Listo:** Autenticación LDAP → JWT completa con RBAC
-- **Listo:** Sesiones RADIUS — Accounting Start en login, Stop en logout. RADIUS no bloquea el login si falla.
-- **Pendiente:** Configurar EF Core en `SCDbContext`, agregar entidades de negocio, migraciones
+- **Listo:** EF Core configurado con PostgreSQL (`SCDbContext`, migraciones pendientes de ejecutar)
+- **Listo:** Registro de sesiones web en tabla `useractivities` (StartedAt, EndedAt, IpAddress)
+- **Listo:** Paneles Grafana dinámicos desde tabla `grafanapanels` en DB
+- **Suspendido:** RADIUS Accounting-Start en login (código presente pero comentado) — RADIUS es para equipos de red, no sesiones web
+- **Activo:** RADIUS Accounting-Stop en logout (pendiente de evaluar si se mantiene)
+- **Pendiente:** Ejecutar migraciones EF Core en PostgreSQL
+- **Pendiente:** Endpoint para consultar sesiones activas (`useractivities WHERE EndedAt IS NULL`)
+- **Pendiente:** Restaurar `[Authorize]` en `MonitoringController` (actualmente comentado para pruebas)
 - **Scaffolding:** `WeatherForecastController` es código de plantilla — puede eliminarse
 
 ## Puertos Locales

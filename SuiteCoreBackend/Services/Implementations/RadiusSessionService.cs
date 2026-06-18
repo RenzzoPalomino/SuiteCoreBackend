@@ -35,12 +35,11 @@ namespace SuiteCoreBackend.Services.Implementations
         /// </summary>
         /// <param name="username">Nombre de usuario autenticado vía LDAP.</param>
         /// <param name="clientIp">IP del cliente que inicia sesión (Calling-Station-Id).</param>
-        /// <returns>Session ID generado (16 caracteres, GUID truncado en mayúsculas).</returns>
-        public async Task<string> StartSessionAsync(string username, string clientIp)
+        /// <param name="sessionId">ID de sesión aleatoria.</param>
+        public async Task StartSessionAsync(string username, string clientIp,string sessionId)
         {
-            var sessionId = Guid.NewGuid().ToString("N")[..16].ToUpper();
             await SendAccountingAsync(username, sessionId, clientIp, (uint)AccountingStatus.Start);
-            return sessionId;
+
         }
 
         /// <summary>
