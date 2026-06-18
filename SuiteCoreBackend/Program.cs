@@ -1,13 +1,15 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
+ using Microsoft.IdentityModel.Tokens;
 using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Implementations;
 using SuiteCoreBackend.Services.Interfaces;
+using SuiteCoreBackend.Services.Monitoring;
+using SuiteCoreBackend.Infrastructure.Interfaces;
+using SuiteCoreBackend.Infrastructure.Implementations;
 using SuiteCoreBackend.Settings; 
 using System.Text;
-//using SuiteCoreBackend.Services.Implementations;
-using SuiteCoreBackend.Services.Monitoring;
+using Microsoft.EntityFrameworkCore;
+using SuiteCoreBackend.Infrastructure.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,9 @@ builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<AutoMapperProfile>();
 });
+
+builder.Services.AddDbContext<SCDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 // ---------------------------------------------------------
 // 2. Leemos la sección "Jwt" desde appsettings.json
 // ---------------------------------------------------------
@@ -42,6 +47,7 @@ builder.Services.AddScoped<ILdapAuthService, LdapAuthService>();
 builder.Services.AddScoped<IRadiusSessionService, RadiusSessionService>();
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
+builder.Services.AddScoped<IGrafanaRepository, GrafanaRepository>();
 
 // 4. Convertimos la sección Jwt a un objeto JwtSettings
 // para usar sus valores directamente en Program.cs

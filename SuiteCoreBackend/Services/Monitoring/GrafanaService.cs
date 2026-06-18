@@ -1,40 +1,32 @@
-﻿using SuiteCoreBackend.DTOs.Monitoring;
+using SuiteCoreBackend.DTOs.Monitoring;
+using SuiteCoreBackend.Infrastructure.Context;
+using SuiteCoreBackend.Infrastructure.Interfaces;
 using SuiteCoreBackend.Services.Interfaces;
 
 namespace SuiteCoreBackend.Services.Monitoring;
 
 public class GrafanaService : IGrafanaService
 {
+    
     private readonly IConfiguration _config;
+    private readonly IGrafanaRepository _grafanaRepository;
 
-    public GrafanaService(IConfiguration config)
+    public GrafanaService(IGrafanaRepository grafanarepo, IConfiguration config)
     {
+        _grafanaRepository = grafanarepo;
         _config = config;
     }
 
     public async Task<IEnumerable<GrafanaPanelDto>> GetPanelsAsync()
     {
         var grafanaUrl = _config["Grafana:Url"];
-        var dashboardUid = _config["Grafana:DashboardUid"];
 
-        var panels = new List<GrafanaPanelDto>
+        var panels = await _grafanaRepository.GetAll();
+
+        return panels.Select(p => new GrafanaPanelDto
         {
-            new()
-            {
-                Name = "Panel WAN",
-                PanelId = 2,
-                Url =
-                    $"{grafanaUrl}/d-solo/{dashboardUid}/suite-core-noc-dashboard?orgId=1&panelId=2"
-            },
-            new()
-            {
-                Name = "RAM Firewall",
-                PanelId = 1,
-                Url =
-                    $"{grafanaUrl}/d-solo/{dashboardUid}/suite-core-noc-dashboard?orgId=1&panelId=1"
-            }
-        };
-
-        return await Task.FromResult(panels);
+            Name = p.Name,
+            Url = $"{grafanaUrl}/d-solo/{p.DashboardUid}/suite-core-noc-dashboard?orgId=1&panelId={p.PanelId}"
+        });
     }
 }

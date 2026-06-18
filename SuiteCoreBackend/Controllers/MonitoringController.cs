@@ -19,7 +19,7 @@ public class MonitoringController : ControllerBase
     }
 
     [HttpGet("device-types")]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> GetDeviceTypes()
     {
         var result = await _service.GetDeviceTypesAsync();
@@ -27,7 +27,6 @@ public class MonitoringController : ControllerBase
     }
 
     [HttpGet("grafana-panels")]
-    [Authorize]
     public async Task<IActionResult> GetGrafanaPanels()
     {
         var result = await _grafanaService.GetPanelsAsync();
