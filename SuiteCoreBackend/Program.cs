@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
- using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens;
 using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Implementations;
 using SuiteCoreBackend.Services.Interfaces;
@@ -42,6 +42,7 @@ builder.Services.AddScoped<ITestUserService, TestUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILdapAuthService, LdapAuthService>(); /**/
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
+builder.Services.AddHttpClient<INetboxService, NetboxService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
 builder.Services.AddScoped<IGrafanaRepository, GrafanaRepository>();
 
