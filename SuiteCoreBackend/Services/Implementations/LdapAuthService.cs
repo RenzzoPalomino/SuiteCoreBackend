@@ -3,6 +3,7 @@ using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Interfaces;
 using System.Net;
 using System.DirectoryServices.Protocols;
+using SuiteCoreBackend.Settings;
 
 namespace SuiteCoreBackend.Services.Implementations
 {

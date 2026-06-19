@@ -12,6 +12,7 @@ using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Services.Monitoring;
 using SuiteCoreBackend.Settings; 
 using System.Text;
+//using SuiteCoreBackend.Infraestucture.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,22 @@ builder.Services.AddAutoMapper(cfg =>
 
 builder.Services.AddDbContext<SCDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowedOrigins", builder =>
+    {
+        builder.WithOrigins(allowedOrigins ?? Array.Empty<string>())
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+
+    });
+
+
 // ---------------------------------------------------------
 // 2. Leemos la sección "Jwt" desde appsettings.json
 // ---------------------------------------------------------
@@ -40,7 +57,9 @@ builder.Services.Configure<LdapSettings>(
 builder.Services.Configure<RadiusSettings>(
     builder.Configuration.GetSection("Radius"));
 
-
+builder.Services.Configure<OxidizedSettings>(
+    builder.Configuration.GetSection("Oxidized"));
+builder.Services.AddHttpClient<IOxidizedService, OxidizedService>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -51,7 +70,10 @@ builder.Services.AddHttpClient<INetboxService, NetboxService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
 builder.Services.AddScoped<IGrafanaRepository, GrafanaRepository>();
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
- 
+
+
+
+
 // 4. Convertimos la sección Jwt a un objeto JwtSettings
 // para usar sus valores directamente en Program.cs
 // ---------------------------------------------------------
@@ -126,9 +148,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 // ---------------------------------------------------------
-// 8. Redireccionamiento HTTPS
+// 8. Redireccionamiento HTTPS y habilitación de cors
 // ---------------------------------------------------------
 app.UseHttpsRedirection();
+app.UseCors("AllowedOrigins");
 // ---------------------------------------------------------
 // 9. Activamos autenticación
 // IMPORTANTE: debe ir antes de UseAuthorization()

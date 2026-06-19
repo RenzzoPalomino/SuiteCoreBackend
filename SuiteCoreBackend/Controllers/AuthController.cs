@@ -28,7 +28,7 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "La solicitud no es válida." });
 
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-                return BadRequest(new { message = "El correo y la contraseña son obligatorios." });
+                return BadRequest(new { message = "El usuario y la contraseña son obligatorios." });
 
             var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "0.0.0.0";
             var response = await _authService.LoginAsync(request, clientIp);
