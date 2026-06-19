@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace SuiteCoreBackend.Models.Entities;
 
@@ -10,8 +10,14 @@ public class NetboxResponse
 
 public class NetboxRegionResult
 {
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("slug")]
+    public string Slug { get; set; } = string.Empty;
 
     [JsonPropertyName("site_count")]
     public int SiteCount { get; set; }

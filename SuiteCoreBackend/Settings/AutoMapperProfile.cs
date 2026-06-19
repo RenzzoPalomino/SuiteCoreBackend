@@ -1,5 +1,6 @@
-﻿using AutoMapper;
+using AutoMapper;
 using SuiteCoreBackend.DTOs.Auth;
+using SuiteCoreBackend.DTOs.Monitoring;
 using SuiteCoreBackend.Models.Entities;
 
 namespace SuiteCoreBackend.Settings
@@ -9,6 +10,8 @@ namespace SuiteCoreBackend.Settings
         public AutoMapperProfile()
         {
             CreateMap<LdapUser, LdapUserDto>().ReverseMap();
+            CreateMap<NetboxRegionResult, NetboxRegionDto>().ReverseMap();
+            CreateMap<NetboxRegionResult, NetboxRegionDetailDto>().ReverseMap();
         }
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SuiteCoreBackend.DTOs.Monitoring;
 using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Services.Monitoring;
 
@@ -51,6 +52,78 @@ public class MonitoringController : ControllerBase
         {
             var result = await _netboxService.GetRegionsAsync();
             return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpGet("netbox-regions/{id:int}")]
+    //[Authorize]
+    public async Task<IActionResult> GetNetboxRegionById(int id)
+    {
+        try
+        {
+            var result = await _netboxService.GetRegionByIdAsync(id);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpPost("netbox-regions")]
+    //[Authorize]
+    public async Task<IActionResult> CreateNetboxRegion([FromBody] CreateNetboxRegionDto dto)
+    {
+        try
+        {
+            var result = await _netboxService.CreateRegionAsync(dto);
+            return CreatedAtAction(nameof(GetNetboxRegions), new { name = result.Name }, result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpPatch("netbox-regions/{id:int}")]
+    //[Authorize]
+    public async Task<IActionResult> UpdateNetboxRegion(int id, [FromBody] UpdateNetboxRegionDto dto)
+    {
+        try
+        {
+            var result = await _netboxService.UpdateRegionAsync(id, dto);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpDelete("netbox-regions/{id:int}")]
+    //[Authorize]
+    public async Task<IActionResult> DeleteNetboxRegion(int id)
+    {
+        try
+        {
+            await _netboxService.DeleteRegionAsync(id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
         }
         catch (Exception ex)
         {
