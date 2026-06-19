@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SuiteCoreBackend.DTOs.Auth;
+using SuiteCoreBackend.Enums;
 using SuiteCoreBackend.Services.Interfaces;
 using System.Security.Claims;
 
@@ -61,19 +62,25 @@ public class AuthController : ControllerBase
     public IActionResult Me()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var email = User.FindFirst(ClaimTypes.Email)?.Value;
+        var username = User.FindFirst("username")?.Value;
+        var name = User.FindFirst(ClaimTypes.GivenName)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var sessionId = User.FindFirst("sessionId")?.Value;
+        var department = User.FindFirst("department")?.Value;
 
         return Ok(new
         {
             Id = userId,
-            Email = email,
-            Rol = role
+            Username = username,
+            Name = name,
+            Rol = role,
+            SessionId = sessionId,
+            Department = department
         });
     }
 
     [HttpGet("admin")]
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = $"{RoleGroupCodes.NETWORK_ADMIN},{RoleGroupCodes.IT_SUPERVISOR}")]
     public IActionResult AdminOnly()
     {
         return Ok(new { message = "Acceso permitido solo para Administradores." });

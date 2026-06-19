@@ -56,7 +56,7 @@ public class AuthService : IAuthService
             Username = user.Username,
             IpAddress = clientIp,
             StartedAt = currentDatetime,
-            EndedAt = currentDatetime.AddMinutes(_jwtSettings.ExpiresInMinutes),
+            EndedAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiresInMinutes),
             LastActivityAt = currentDatetime
         });
 

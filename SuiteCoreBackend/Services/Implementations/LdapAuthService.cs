@@ -52,7 +52,7 @@ namespace SuiteCoreBackend.Services.Implementations
             }
             catch (LdapException ldapex) 
             {
-                throw new Exception("Servicio LDAP no disponible", ldapex);
+                throw new Exception($"Servicio LDAP no disponible: {ldapex.Message}");
             }
             catch (DirectoryOperationException){
                 throw new Exception($"No se pudo completar la operación LDAP para el usuario {username}");
