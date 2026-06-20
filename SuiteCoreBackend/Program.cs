@@ -41,9 +41,8 @@ builder.Services.AddCors(options =>
         builder.WithOrigins(allowedOrigins ?? Array.Empty<string>())
                .AllowAnyMethod()
                .AllowAnyHeader();
-
     });
-
+});
 
 // ---------------------------------------------------------
 // 2. Leemos la sección "Jwt" desde appsettings.json
