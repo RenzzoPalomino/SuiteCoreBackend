@@ -12,6 +12,8 @@ namespace SuiteCoreBackend.Settings
             CreateMap<LdapUser, LdapUserDto>().ReverseMap();
             CreateMap<NetboxRegionResult, NetboxRegionDto>().ReverseMap();
             CreateMap<NetboxRegionResult, NetboxRegionDetailDto>().ReverseMap();
+            CreateMap<NetboxIpAddressResult, NetboxIpAddressDto>().ReverseMap();
+            CreateMap<NetboxStatusResult, NetboxStatusDto>().ReverseMap();
         }
     }
 }
