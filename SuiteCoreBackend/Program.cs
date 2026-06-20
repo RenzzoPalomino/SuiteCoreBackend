@@ -1,15 +1,18 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+ using Microsoft.IdentityModel.Tokens;
+using SuiteCoreBackend.Helpers;
+using SuiteCoreBackend.Infrastructure.Context;
+using SuiteCoreBackend.Infrastructure.Implementations;
+using SuiteCoreBackend.Infrastructure.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Implementations;
 using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Services.Monitoring;
-using SuiteCoreBackend.Infrastructure.Interfaces;
-using SuiteCoreBackend.Infrastructure.Implementations;
 using SuiteCoreBackend.Settings; 
 using System.Text;
-using Microsoft.EntityFrameworkCore;
-using SuiteCoreBackend.Infrastructure.Context;
+//using SuiteCoreBackend.Infraestucture.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +29,21 @@ builder.Services.AddAutoMapper(cfg =>
 
 builder.Services.AddDbContext<SCDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowedOrigins", builder =>
+    {
+        builder.WithOrigins(allowedOrigins ?? Array.Empty<string>())
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+
 // ---------------------------------------------------------
 // 2. Leemos la sección "Jwt" desde appsettings.json
 // ---------------------------------------------------------
@@ -35,16 +53,25 @@ builder.Services.Configure<JwtSettings>(jwtSection);
 builder.Services.Configure<LdapSettings>(
     builder.Configuration.GetSection("Ldap"));
 
+builder.Services.Configure<RadiusSettings>(
+    builder.Configuration.GetSection("Radius"));
 
+builder.Services.Configure<OxidizedSettings>(
+    builder.Configuration.GetSection("Oxidized"));
+builder.Services.AddHttpClient<IOxidizedService, OxidizedService>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<ITestUserService, TestUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ILdapAuthService, LdapAuthService>(); /**/
+builder.Services.AddScoped<ILdapAuthService, LdapAuthService>();
+builder.Services.AddScoped<IRadiusSessionService, RadiusSessionService>();
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
 builder.Services.AddHttpClient<INetboxService, NetboxService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
 builder.Services.AddScoped<IGrafanaRepository, GrafanaRepository>();
+builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
+
+
+
 
 // 4. Convertimos la sección Jwt a un objeto JwtSettings
 // para usar sus valores directamente en Program.cs
@@ -84,11 +111,11 @@ builder.Services
             ValidateIssuer = true,
             ValidIssuer = jwtSettings.Issuer,
 
-            // Valida que el token esté dirigido a nuestra audiencia esperada
+            // Valida que el token está dirigido a nuestra audiencia esperada
             ValidateAudience = true,
             ValidAudience = jwtSettings.Audience,
 
-            // Valida que el token no esté vencido
+            // Valida que el token no está vencido
             ValidateLifetime = true,
 
             // Valida la clave con la que fue firmado el token
@@ -120,9 +147,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 // ---------------------------------------------------------
-// 8. Redireccionamiento HTTPS
+// 8. Redireccionamiento HTTPS y habilitación de cors
 // ---------------------------------------------------------
 app.UseHttpsRedirection();
+app.UseCors("AllowedOrigins");
 // ---------------------------------------------------------
 // 9. Activamos autenticación
 // IMPORTANTE: debe ir antes de UseAuthorization()

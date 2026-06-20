@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SuiteCoreBackend.Helpers;
 using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Settings;
@@ -18,16 +19,18 @@ namespace SuiteCoreBackend.Services.Implementations
             _jwtSettings = jwtOptions.Value;
         }
 
-        public string GenerateToken(LdapUser user)
+        public string GenerateToken(LdapUser user, string sessionId)
         {
             var claims = new List<Claim>
             {
                 //new(ClaimTypes.Email, user.Email),
                 new(ClaimTypes.Name, user.DisplayName),
                 new(ClaimTypes.GivenName, user.FirstName),
+                new(ClaimTypes.Role, user.GidNumber),
                 new("department", user.Department),
                 new("username", user.Username),
-            };
+                new("sessionId", sessionId),
+             };
             // Un claim por rol — [Authorize(Roles = "Administradores")] funciona directo
             foreach (var role in user.Roles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
@@ -45,7 +48,6 @@ namespace SuiteCoreBackend.Services.Implementations
                 key,
                 SecurityAlgorithms.HmacSha256
             );
-
 
             var token = new JwtSecurityToken(
                 issuer: _jwtSettings.Issuer,

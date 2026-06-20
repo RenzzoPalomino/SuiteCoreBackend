@@ -1,8 +1,11 @@
 ﻿namespace SuiteCoreBackend.DTOs.Auth
 {
-    public class LoginRequestDto
+    
+    public class LoginResponseDto
     {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
+        public DateTime ExpiresAt { get; set; }
+        public LdapUserDto User { get; set; } = new();
+        public string SessionId { get; set; } = string.Empty;
     }
 }

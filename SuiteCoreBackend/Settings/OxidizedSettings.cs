@@ -1,9 +1,8 @@
-﻿using SuiteCoreBackend.Models.Entities;
-
-namespace SuiteCoreBackend.DTOs.Auth
+﻿namespace SuiteCoreBackend.Settings
 {
-    public class LoginRequestDto
+    public class OxidizedSettings
     {
+        public string BaseUrl { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
