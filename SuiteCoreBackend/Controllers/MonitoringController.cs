@@ -130,4 +130,19 @@ public class MonitoringController : ControllerBase
             return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
         }
     }
+
+    [HttpGet("netbox-ip-addresses")]
+    //[Authorize]
+    public async Task<IActionResult> GetNetboxIpAddresses()
+    {
+        try
+        {
+            var result = await _netboxService.GetIpAddressesAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
 }

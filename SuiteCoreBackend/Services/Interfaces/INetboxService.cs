@@ -9,4 +9,5 @@ public interface INetboxService
     Task<NetboxRegionDetailDto> GetRegionByIdAsync(int id);
     Task<NetboxRegionDetailDto> UpdateRegionAsync(int id, UpdateNetboxRegionDto dto);
     Task<bool> DeleteRegionAsync(int id);
+    Task<IEnumerable<NetboxIpAddressDto>> GetIpAddressesAsync();
 }

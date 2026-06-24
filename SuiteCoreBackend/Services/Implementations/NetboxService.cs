@@ -280,4 +280,49 @@ public class NetboxService : INetboxService
             throw new Exception($"Error al eliminar la región con ID {id} en Netbox", ex);
         }
     }
+
+    public async Task<IEnumerable<NetboxIpAddressDto>> GetIpAddressesAsync()
+    {
+        try
+        {
+            var url = _config["Netbox:Url"];
+            var token = _config["Netbox:Token"];
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
+            }
+
+            var requestUrl = $"{url.TrimEnd('/')}/api/ipam/ip-addresses/";
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var netboxResponse = JsonSerializer.Deserialize<NetboxIpResponse>(json, options);
+
+            if (netboxResponse?.Results == null)
+            {
+                return Enumerable.Empty<NetboxIpAddressDto>();
+            }
+
+            return _mapper.Map<List<NetboxIpAddressDto>>(netboxResponse.Results);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error al obtener las direcciones IP desde Netbox", ex);
+        }
+    }
 }
