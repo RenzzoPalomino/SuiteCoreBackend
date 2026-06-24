@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using SuiteCoreBackend.Helpers;
 using SuiteCoreBackend.DTOs.Backup;
 using SuiteCoreBackend.DTOs.Oxidized;
 using SuiteCoreBackend.Services.Interfaces;
@@ -31,6 +32,11 @@ namespace SuiteCoreBackend.Services.Implementations
                 new AuthenticationHeaderValue("Basic", credentials);
         }
 
+        /// <summary>
+        /// Método para obtener la lista de dispositivos desde Oxidized.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public async Task<List<OxidizedDeviceDto>> GetDevicesAsync()
         {
             var response = await _httpClient.GetAsync("/nodes.json");
@@ -56,60 +62,142 @@ namespace SuiteCoreBackend.Services.Implementations
             return devices ?? new List<OxidizedDeviceDto>();
         }
 
-        public async Task<OxidizedBackupDto> GetDeviceBackupAsync(string deviceName)
+        /// <summary>
+        /// Método para obtener la configuración de un dispositivo desde Oxidized.
+        /// Si no se envían datos de versión, obtiene la configuración actual.
+        /// Si se envían oid, epoch y num, obtiene una versión específica.
+        /// </summary>
+        /// <param name="deviceName">Nombre del dispositivo registrado en Oxidized.</param>
+        /// <param name="oid">OID/hash de la versión específica.</param>
+        /// <param name="epoch">Epoch de la versión específica.</param>
+        /// <param name="num">Número de versión específica.</param>
+        /// <param name="group">Grupo del dispositivo en Oxidized.</param>
+        /// <returns>DTO con la configuración obtenida.</returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<OxidizedBackupDto> GetDeviceBackupAsync(
+            string deviceName,
+            string? oid = null,
+            long? epoch = null,
+            int? num = null,
+            string? group = "")
         {
-            //var response = await _httpClient.GetAsync($"/node/fetch/{deviceName}");
-
             var encodedDeviceName = Uri.EscapeDataString(deviceName);
-            var response = await _httpClient.GetAsync($"/node/fetch/{encodedDeviceName}");
+            var url = string.Empty;
+            var backupType = "current";
+
+            var isSpecificVersion =
+                !string.IsNullOrWhiteSpace(oid) &&
+                epoch.HasValue &&
+                num.HasValue;
+
+            if (isSpecificVersion)
+            {
+                var encodedOid = Uri.EscapeDataString(oid!);
+                var encodedGroup = Uri.EscapeDataString(group ?? string.Empty);
+
+                url =
+                    $"/node/version/view?node={encodedDeviceName}" +
+                    $"&group={encodedGroup}" +
+                    $"&oid={encodedOid}" +
+                    $"&epoch={epoch.Value}" +
+                    $"&num={num.Value}"
+                    +$"&format=json";
+
+                    backupType = "version";
+            }
+            else
+            {
+                url = $"/node/fetch/{encodedDeviceName}";
+            }
+
+            var response = await _httpClient.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
 
                 throw new Exception(
-                    $"No se pudo obtener el backup del dispositivo {deviceName}. Status: {(int)response.StatusCode}. Error: {error}"
+                    $"No se pudo obtener la configuración del dispositivo {deviceName}. " +
+                    $"Tipo: {backupType}. Status: {(int)response.StatusCode}. Error: {error}"
                 );
             }
 
-            var config = await response.Content.ReadAsStringAsync();
+            var rawContent = await response.Content.ReadAsStringAsync();
+            var config = OxidizeHelper.NormalizeOxidizedConfig(rawContent);
+
 
             return new OxidizedBackupDto
             {
                 DeviceName = deviceName,
                 Config = config,
+                BackupType = backupType,
+                Oid = oid,
+                Epoch = epoch,
+                Num = num,
                 RetrievedAt = DateTime.Now
             };
         }
 
-        public async Task<List<OxidizedBackupDto>> GetAllDeviceBackupsAsync()
+
+        /// <summary>
+        /// Método para mostrar historial/versiones disponibles del backup de un dispositivo.
+        /// </summary>
+        /// <param name="deviceName">Nombre completo del dispositivo registrado en Oxidized.</param>
+        /// <returns>Lista de versiones disponibles del backup del dispositivo.</returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<List<OxidizedVersionDto>> GetDeviceVersionsAsync(string deviceName)
         {
-            var devices = await GetDevicesAsync();
+            var encodedDeviceName = Uri.EscapeDataString(deviceName);
 
-            var backups = new List<OxidizedBackupDto>();
+            var response = await _httpClient.GetAsync(
+                $"/node/version?node_full={encodedDeviceName}&format=json"
+            );
 
-            foreach (var device in devices)
+            if (!response.IsSuccessStatusCode)
             {
-                if (string.IsNullOrWhiteSpace(device.Name))
-                    continue;
+                var error = await response.Content.ReadAsStringAsync();
 
-                try
+                throw new Exception(
+                    $"No se pudo obtener el historial de versiones del dispositivo {deviceName}. Status: {(int)response.StatusCode}. Error: {error}"
+                );
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            var versions = JsonSerializer.Deserialize<List<OxidizedVersionDto>>(
+                content,
+                new JsonSerializerOptions
                 {
-                    var backup = await GetDeviceBackupAsync(device.Name);
-                    backups.Add(backup);
-                }
-                catch (Exception ex)
+                    PropertyNameCaseInsensitive = true
+                });
+
+            versions ??= new List<OxidizedVersionDto>();
+
+            var total = versions.Count;
+
+            for (int i = 0; i < versions.Count; i++)
+            {
+                var version = versions[i];
+
+                version.Epoch = OxidizeHelper.ConvertToEpoch(version.Time ?? version.Date);
+
+                // Según el comportamiento observado en Oxidized:
+                // última versión de una lista de 4 usa num=4
+                version.Num = total - i;
+
+                if (!string.IsNullOrWhiteSpace(version.Oid) && version.Epoch.HasValue)
                 {
-                    backups.Add(new OxidizedBackupDto
-                    {
-                        DeviceName = device.Name,
-                        Config = $"ERROR: No se pudo obtener el backup. Detalle: {ex.Message}",
-                        RetrievedAt = DateTime.Now
-                    });
+                    var backupUrl =
+                        $"/api/oxidized/devices/{Uri.EscapeDataString(deviceName)}/backup" +
+                        $"?oid={Uri.EscapeDataString(version.Oid)}" +
+                        $"&epoch={version.Epoch.Value}" +
+                        $"&num={version.Num}";
+                    version.BackupUrl = backupUrl;
                 }
             }
 
-            return backups;
+            return versions;
         }
+        
     }
 }

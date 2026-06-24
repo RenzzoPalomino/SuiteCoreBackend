@@ -6,7 +6,14 @@ namespace SuiteCoreBackend.Services.Interfaces
     public interface IOxidizedService
     {
         Task<List<OxidizedDeviceDto>> GetDevicesAsync();
-        Task<List<OxidizedBackupDto>> GetAllDeviceBackupsAsync();
-        Task<OxidizedBackupDto> GetDeviceBackupAsync(string deviceName);
+        Task<OxidizedBackupDto> GetDeviceBackupAsync(
+            string deviceName,
+            string? oid = null,
+            long? epoch = null,
+            int? num = null,
+            string? group = ""
+        );
+
+        Task<List<OxidizedVersionDto>> GetDeviceVersionsAsync(string deviceName);
     }
 }

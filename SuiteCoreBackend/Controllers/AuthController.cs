@@ -12,6 +12,7 @@ namespace SuiteCoreBackend.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    //private readonly ISessionPropertyService _sessionPropertyService;
 
     public AuthController(IAuthService authService)
     {
@@ -85,4 +86,14 @@ public class AuthController : ControllerBase
     {
         return Ok(new { message = "Acceso permitido solo para Administradores." });
     }
+
+    //[HttpGet("Access")]
+    //[Authorize]
+    //public ActionResult MenusByRole()
+    //{
+    //    var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+    //    var menus = _authService.GetMenusByRole(role);
+
+    //}
 }
