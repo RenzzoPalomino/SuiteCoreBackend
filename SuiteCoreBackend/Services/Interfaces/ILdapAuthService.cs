@@ -1,11 +1,26 @@
 ﻿using SuiteCoreBackend.Models.Entities;
-using System.DirectoryServices.Protocols;
 
 namespace SuiteCoreBackend.Services.Interfaces
 {
     public interface ILdapAuthService
     {
-        public LdapUser? Authenticate(string username, string password);
- 
+        /// <summary>
+        /// Metodo para autenticar un usuario en LDAP
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        LdapUser? Authenticate(string username, string password);
+        /// <summary>
+        /// Método para obtener todos los roles de LDAP
+        /// </summary>
+        /// <returns></returns>
+        List<LdapRole> GetRoles();
+        /// <summary>
+        /// Método para obtener todos los usuarios de LDAP
+        /// </summary>
+        /// <param name="gidNumber"></param>
+        /// <returns></returns>
+        List<LdapUser> GetUsersByGid(string gidNumber);
     }
 }

@@ -69,6 +69,8 @@ builder.Services.AddHttpClient<INetboxService, NetboxService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
 builder.Services.AddScoped<IGrafanaRepository, GrafanaRepository>();
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
+builder.Services.AddScoped<IMenuRepository, MenuRepository>();
+builder.Services.AddScoped<IMenuService, MenuService>();
 
 
 
