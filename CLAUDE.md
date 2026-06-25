@@ -29,10 +29,12 @@ Todas las interfaces de servicio y repositorio se registran como **Scoped** en e
 SuiteCoreBackend/
 ├── Controllers/                    # Endpoints HTTP
 │   ├── AuthController.cs           # Login, Logout, /me, /admin
-│   └── MonitoringController.cs     # Tipos de dispositivo, paneles Grafana
+│   ├── MonitoringController.cs     # Tipos de dispositivo, paneles Grafana
+│   └── NetboxController.cs         # Regiones e IP addresses de Netbox
 ├── DTOs/
 │   ├── Auth/                       # LoginRequestDto, LoginResponseDto, LdapUserDto
-│   └── Monitoring/                 # DeviceTypeDto, GrafanaPanelDto
+│   ├── Monitoring/                 # DeviceTypeDto, GrafanaPanelDto
+│   └── Netbox/                     # CreateNetboxRegionDto, NetboxIpAddressDto, etc.
 ├── Helpers/
 │   └── DateTimeHelper.cs           # Utilidad de zona horaria (Perú)
 ├── Models/Entities/                # Entidades de dominio
@@ -61,6 +63,12 @@ SuiteCoreBackend/
 | GET    | /api/auth/admin               | [Authorize(Rol=Admin)] | Solo Administradores                 |
 | GET    | /api/monitoring/device-types  | (temporalmente abierto)| Tipos de dispositivo LibreNMS        |
 | GET    | /api/monitoring/grafana-panels| (temporalmente abierto)| Paneles Grafana desde DB             |
+| GET    | /api/netbox/regions           | (temporalmente abierto)| Obtener regiones desde Netbox        |
+| GET    | /api/netbox/regions/{id}      | (temporalmente abierto)| Obtener región por ID desde Netbox   |
+| POST   | /api/netbox/regions           | (temporalmente abierto)| Crear región en Netbox               |
+| PATCH  | /api/netbox/regions/{id}      | (temporalmente abierto)| Actualizar región en Netbox          |
+| DELETE | /api/netbox/regions/{id}      | (temporalmente abierto)| Eliminar región en Netbox            |
+| GET    | /api/netbox/ip-addresses      | (temporalmente abierto)| Obtener direcciones IP desde Netbox  |
 | GET    | /weatherforecast              | Ninguna                | Endpoint de prueba (scaffold)        |
 
 ## Flujo de Autenticación
@@ -101,6 +109,7 @@ El token JWT incluye los claims: `name`, `givenName`, `department`, `username`, 
 | IRadiusSessionService   | RadiusSessionService   | Accounting Start/Stop contra RADIUS (suspendido en login)      |
 | IGrafanaService         | GrafanaService         | Construye URLs de paneles Grafana consultando DB               |
 | ILibreNmsService        | LibreNmsService        | Consulta dispositivos desde LibreNMS vía HTTP                  |
+| INetboxService          | NetboxService          | Consulta regiones e IPs desde Netbox vía HTTP                  |
 
 ## Repositorios (Infrastructure)
 
@@ -180,7 +189,7 @@ Las clases de configuración son: `JwtSettings`, `LdapSettings` y `RadiusSetting
 - **Activo:** RADIUS Accounting-Stop en logout (pendiente de evaluar si se mantiene)
 - **Pendiente:** Ejecutar migraciones EF Core en PostgreSQL
 - **Pendiente:** Endpoint para consultar sesiones activas (`useractivities WHERE EndedAt IS NULL`)
-- **Pendiente:** Restaurar `[Authorize]` en `MonitoringController` (actualmente comentado para pruebas)
+- **Pendiente:** Restaurar `[Authorize]` en `MonitoringController` y `NetboxController` (actualmente comentado para pruebas)
 - **Scaffolding:** `WeatherForecastController` es código de plantilla — puede eliminarse
 
 ## Puertos Locales

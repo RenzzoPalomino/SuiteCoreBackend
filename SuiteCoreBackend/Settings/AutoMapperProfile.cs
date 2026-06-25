@@ -1,6 +1,7 @@
 using AutoMapper;
 using SuiteCoreBackend.DTOs.Auth;
 using SuiteCoreBackend.DTOs.Monitoring;
+using SuiteCoreBackend.DTOs.Netbox;
 using SuiteCoreBackend.Models.Entities;
 
 namespace SuiteCoreBackend.Settings

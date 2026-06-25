@@ -1,12 +1,12 @@
 using AutoMapper;
-using SuiteCoreBackend.DTOs.Monitoring;
+using SuiteCoreBackend.DTOs.Netbox;
 using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Interfaces;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SuiteCoreBackend.Services.Monitoring;
+namespace SuiteCoreBackend.Services.Implementations;
 
 public class NetboxService : INetboxService
 {
