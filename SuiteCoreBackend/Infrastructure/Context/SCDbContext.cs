@@ -17,7 +17,7 @@ namespace SuiteCoreBackend.Infrastructure.Context
         
 
         /// <summary>
-        /// Método para configurar el modelo de datos. Aquí puedes definir las relaciones, restricciones y otras configuraciones para tus entidades.
+        /// Mï¿½todo para configurar el modelo de datos. Aquï¿½ puedes definir las relaciones, restricciones y otras configuraciones para tus entidades.
         /// </summary>
         /// <param name="modelBuilder"></param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -29,7 +29,14 @@ namespace SuiteCoreBackend.Infrastructure.Context
 
             modelBuilder.Entity<Menu>();
             modelBuilder.Entity<MenuBlock>();
-            modelBuilder.Entity<RoleMenu>();
+            modelBuilder.Entity<RoleMenu>(entity =>
+            {
+                entity.Property(e => e.ModifiedAt)
+                    .HasDefaultValueSql("(NOW() - INTERVAL '5 hours')");
+
+                entity.Property(e => e.Active)
+                    .HasDefaultValue(true);
+            });
 
 
              

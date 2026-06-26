@@ -19,5 +19,15 @@ namespace SuiteCoreBackend.Models.Entities
 
         [ForeignKey(nameof(MenuId))]
         public Menu Menu { get; set; } = null!;
+
+        [MaxLength(100)]
+        [Column("modified_by")]
+        public string? ModifiedBy { get; set; }
+
+        [Column("modified_at")]
+        public DateTime ModifiedAt { get; set; }
+
+        [Column("active")]
+        public bool Active { get; set; } = true;
     }
 }

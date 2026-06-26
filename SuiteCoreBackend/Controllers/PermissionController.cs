@@ -1,11 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SuiteCoreBackend.Enums;
-using SuiteCoreBackend.Services.Implementations;
+using SuiteCoreBackend.DTOs.Auth;
+using SuiteCoreBackend.DTOs.Menu;
 using SuiteCoreBackend.Services.Interfaces;
 using System.Security.Claims;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace SuiteCoreBackend.Controllers
 {
@@ -13,12 +11,13 @@ namespace SuiteCoreBackend.Controllers
     [ApiController]
     public class PermissionController : ControllerBase
     {
-        //private readonly ILdapAuthService _ldapService;
         private readonly IMenuService _menuService;
+        private readonly ILdapAuthService _ldapService;
 
-        public PermissionController(IMenuService menuService)
+        public PermissionController(IMenuService menuService, ILdapAuthService ldapService)
         {
-            _menuService  = menuService;
+            _menuService = menuService;
+            _ldapService = ldapService;
         }
 
         [HttpGet("Menus")]
@@ -49,6 +48,85 @@ namespace SuiteCoreBackend.Controllers
             }
         }
 
-        //TODO: Implementar endpoint para asignar y desasignar menus a roles, con validación de permisos de administrador.
+        [HttpGet("Roles")]
+        [Authorize]
+        public ActionResult GetRolesWithUsers()
+        {
+            try
+            {
+                var roles = _ldapService.GetRoles();
+
+                var result = roles.Select(role =>
+                {
+                    var users = _ldapService.GetUsersByGid(role.Id)
+                        .Select(u => new LdapUserDto
+                        {
+                            DisplayName = u.DisplayName,
+                            FirstName = u.FirstName,
+                            LastName = u.LastName,
+                            Username = u.Username
+                        }).ToList();
+
+                    return new LdapRoleDto
+                    {
+                        Id = role.Id,
+                        Name = role.Name,
+                        Description = role.Description,
+                        TotalUsers = users.Count,
+                        Users = users
+                    };
+                }).ToList();
+
+                return Ok(new
+                {
+                    total = result.Count,
+                    roles = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("Roles/{gidNumber}/menus")]
+        [Authorize]
+        public async Task<ActionResult> GetMenusByRole(string gidNumber)
+        {
+            try
+            {
+                var menus = await _menuService.GetMenusByRole(gidNumber);
+
+                if (menus is null || menus.Count == 0)
+                    return NotFound(new { message = "No se encontraron menús asignados a este rol." });
+
+                return Ok(new
+                {
+                    gidNumber,
+                    total = menus.Count,
+                    menus
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("Roles/{gidNumber}/menus")]
+        [Authorize]
+        public async Task<ActionResult> AssignMenusToRole(string gidNumber, [FromBody] AssignMenusRequestDto request)
+        {
+            try
+            {
+                var modifiedBy = User.FindFirst("username")?.Value;
+                await _menuService.AssignMenusToRole(gidNumber, request.MenuIds, modifiedBy);
+                return Ok(new { message = "Menús asignados correctamente.", gidNumber });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }

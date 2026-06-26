@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SuiteCoreBackend.Helpers;
 using SuiteCoreBackend.Infrastructure.Context;
 using SuiteCoreBackend.Infrastructure.Interfaces;
 using SuiteCoreBackend.Models.Entities;
@@ -46,28 +47,69 @@ namespace SuiteCoreBackend.Infrastructure.Implementations
         {
             return await _context.RoleMenus
                 .Include(rm => rm.Menu)
+                .Where(rm => rm.Active)
                 .ToListAsync();
         }
 
-        public async Task AssignMenuToRole(string gidNumber, int menuId)
+        public async Task<List<MenuBlock>> GetMenusByRole(string gidNumber)
         {
-            var exists = await _context.RoleMenus
-                .AnyAsync(rm => rm.GidNumber == gidNumber && rm.MenuId == menuId);
-
-            if (exists) return;
-
-            _context.RoleMenus.Add(new RoleMenu { GidNumber = gidNumber, MenuId = menuId });
-            await _context.SaveChangesAsync();
+            return await _context.MenuBlocks
+                .Where(b => b.Active)
+                .OrderBy(b => b.Order)
+                .Select(b => new MenuBlock
+                {
+                    Id = b.Id,
+                    Name = b.Name,
+                    Order = b.Order,
+                    Menus = b.Menus
+                        .Where(m => m.Active && m.RoleMenus.Any(rm => rm.GidNumber == gidNumber && rm.Active))
+                        .OrderBy(m => m.Order)
+                        .ToList()
+                })
+                .Where(b => b.Menus.Count > 0)
+                .ToListAsync();
         }
 
-        public async Task RemoveMenuFromRole(string gidNumber, int menuId)
+        public async Task AssignMenusToRole(string gidNumber, IEnumerable<int> menuIds, string? modifiedBy)
         {
-            var entry = await _context.RoleMenus
-                .FirstOrDefaultAsync(rm => rm.GidNumber == gidNumber && rm.MenuId == menuId);
+            var menuIdList = menuIds.ToList();
+            var now = new DateTimeHelper().GetPeruDateTime();
 
-            if (entry is null) return;
+            // Desactivar todos los registros actuales del rol
+            var existing = await _context.RoleMenus
+                .Where(rm => rm.GidNumber == gidNumber)
+                .ToListAsync();
 
-            _context.RoleMenus.Remove(entry);
+            foreach (var rm in existing)
+            {
+                rm.Active = false;
+                rm.ModifiedBy = modifiedBy;
+                rm.ModifiedAt = now;
+            }
+
+            // Activar los entrantes (existentes) o insertar los nuevos
+            var existingIds = existing.Select(rm => rm.MenuId).ToHashSet();
+
+            foreach (var menuId in menuIdList)
+            {
+                if (existingIds.Contains(menuId))
+                {
+                    var rm = existing.First(rm => rm.MenuId == menuId);
+                    rm.Active = true;
+                }
+                else
+                {
+                    _context.RoleMenus.Add(new RoleMenu
+                    {
+                        GidNumber = gidNumber,
+                        MenuId = menuId,
+                        Active = true,
+                        ModifiedBy = modifiedBy,
+                        ModifiedAt = now
+                    });
+                }
+            }
+
             await _context.SaveChangesAsync();
         }
     }

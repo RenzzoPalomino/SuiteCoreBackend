@@ -22,19 +22,19 @@ namespace SuiteCoreBackend.Infrastructure.Interfaces
         Task<List<RoleMenu>> GetRoleMenus();
 
         /// <summary>
-        /// Asigna un menú a un rol identificado por su gidNumber.
-        /// Si la asignación ya existe, no realiza ninguna acción.
+        /// Obtiene los menús asignados a un rol específico, agrupados por bloque.
+        /// Solo incluye bloques y menús activos con asignación directa al gidNumber.
         /// </summary>
         /// <param name="gidNumber">Identificador del grupo LDAP</param>
-        /// <param name="menuId">Id del menú a asignar</param>
-        Task AssignMenuToRole(string gidNumber, int menuId);
+        Task<List<MenuBlock>> GetMenusByRole(string gidNumber);
 
         /// <summary>
-        /// Elimina la asignación de un menú a un rol.
-        /// Si no existe la asignación, no realiza ninguna acción.
+        /// Asigna en bloque un conjunto de menús a un rol. Los nuevos registros
+        /// se crean con active = false. Omite los menuIds que ya existen para ese rol.
         /// </summary>
         /// <param name="gidNumber">Identificador del grupo LDAP</param>
-        /// <param name="menuId">Id del menú a desasignar</param>
-        Task RemoveMenuFromRole(string gidNumber, int menuId);
+        /// <param name="menuIds">Ids de los menús a asignar</param>
+        /// <param name="modifiedBy">Usuario que realiza la operación</param>
+        Task AssignMenusToRole(string gidNumber, IEnumerable<int> menuIds, string? modifiedBy);
     }
 }

@@ -1,5 +1,6 @@
 using SuiteCoreBackend.DTOs.Menu;
 using SuiteCoreBackend.Infrastructure.Interfaces;
+using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Interfaces;
 
 namespace SuiteCoreBackend.Services.Implementations
@@ -16,18 +17,31 @@ namespace SuiteCoreBackend.Services.Implementations
         public async Task<List<MenuBlockDto>> GetMenusForUser(IEnumerable<string> gidNumbers)
         {
             var blocks = await _menuRepository.GetMenusByGids(gidNumbers);
+            return MapToDto(blocks);
+        }
 
-            return blocks.Select(b => new MenuBlockDto
+        public async Task<List<MenuBlockDto>> GetMenusByRole(string gidNumber)
+        {
+            var blocks = await _menuRepository.GetMenusByRole(gidNumber);
+            return MapToDto(blocks);
+        }
+
+        public async Task AssignMenusToRole(string gidNumber, IEnumerable<int> menuIds, string? modifiedBy)
+        {
+            await _menuRepository.AssignMenusToRole(gidNumber, menuIds, modifiedBy);
+        }
+
+        private static List<MenuBlockDto> MapToDto(List<MenuBlock> blocks) =>
+            [.. blocks.Select(b => new MenuBlockDto
             {
                 Block = b.Name,
                 Order = b.Order,
-                Menus = b.Menus.Select(m => new MenuItemDto
+                Menus = [.. b.Menus.Select(m => new MenuItemDto
                 {
                     Id   = m.Id,
                     Name = m.Name,
                     Slug = m.Slug
-                }).ToList()
-            }).ToList();
-        }
+                })]
+            })];
     }
 }
