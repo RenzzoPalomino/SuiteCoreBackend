@@ -11,6 +11,9 @@ namespace SuiteCoreBackend.Infrastructure.Context
 
         public DbSet<GrafanaPanel> GrafanaPanels { get; set; } = null!;
         public DbSet<UserActivity> UserActivities { get; set; } = null!;
+        public DbSet<Menu> Menus { get; set; } = null!;
+        public DbSet<MenuBlock> MenuBlocks { get; set; } = null!;
+        public DbSet<RoleMenu> RoleMenus { get; set; } = null!;
         
 
         /// <summary>
@@ -23,6 +26,10 @@ namespace SuiteCoreBackend.Infrastructure.Context
 
             modelBuilder.Entity<GrafanaPanel>();
             modelBuilder.Entity<UserActivity>();
+
+            modelBuilder.Entity<Menu>();
+            modelBuilder.Entity<MenuBlock>();
+            modelBuilder.Entity<RoleMenu>();
 
 
              

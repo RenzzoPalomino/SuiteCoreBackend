@@ -12,9 +12,7 @@ namespace SuiteCoreBackend.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-    //private readonly ISessionPropertyService _sessionPropertyService;
-
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, ILdapAuthService ldapService)
     {
         _authService = authService;
     }
@@ -54,7 +52,7 @@ public class AuthController : ControllerBase
 
         if (!string.IsNullOrEmpty(sessionId) && !string.IsNullOrEmpty(username))
             await _authService.LogoutAsync(sessionId, username);
-
+        //destruir el token en el cliente, ya que no se puede invalidar un JWT en el servidor sin un mecanismo de revocación.
         return Ok(new { message = "Sesión cerrada correctamente." });
     }
 
@@ -87,13 +85,5 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Acceso permitido solo para Administradores." });
     }
 
-    //[HttpGet("Access")]
-    //[Authorize]
-    //public ActionResult MenusByRole()
-    //{
-    //    var role = User.FindFirst(ClaimTypes.Role)?.Value;
-
-    //    var menus = _authService.GetMenusByRole(role);
-
-    //}
+    
 }

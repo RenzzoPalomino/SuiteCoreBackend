@@ -29,11 +29,11 @@ namespace SuiteCoreBackend.Services.Implementations
                 new(ClaimTypes.Role, user.GidNumber),
                 new("department", user.Department),
                 new("username", user.Username),
-                new("sessionId", sessionId),
+                new("sessionId", sessionId)
              };
             // Un claim por rol — [Authorize(Roles = "Administradores")] funciona directo
-            foreach (var role in user.Roles)
-                claims.Add(new Claim(ClaimTypes.Role, role));
+            //foreach (var role in user.Roles)
+            //    claims.Add(new Claim(ClaimTypes.Role, role));
 
 
             //Convertimos la Key del appsettings en una clave segura, esta clave se usará para firmar el token
@@ -59,5 +59,6 @@ namespace SuiteCoreBackend.Services.Implementations
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+         
     }
 }
