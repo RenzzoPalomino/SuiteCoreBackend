@@ -26,7 +26,7 @@ namespace SuiteCoreBackend.Infrastructure.Implementations
                     Name = b.Name,
                     Order = b.Order,
                     Menus = b.Menus
-                        .Where(m => m.Active && (m.IsPublic || m.RoleMenus.Any(rm => gidNumbers.Contains(rm.GidNumber))))
+                        .Where(m => m.Active && (m.IsPublic || m.RoleMenus.Any(rm => gidNumbers.Contains(rm.GidNumber) && rm.Active)))
                         .OrderBy(m => m.Order)
                         .ToList()
                 })
