@@ -20,6 +20,10 @@ namespace SuiteCoreBackend.Controllers
             _ldapService = ldapService;
         }
 
+        /// <summary>
+        /// Endpoint obtener propiedades al autenticar
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("Menus")]
         [Authorize]
         public async Task<ActionResult> MenusByRole()
@@ -30,7 +34,7 @@ namespace SuiteCoreBackend.Controllers
                 //var role = RoleGroupCodes.NOC; //testing
                 List<string> roles = new List<string> { role };
 
-                var menus = await _menuService.GetAllMenusWithAssignment(role);
+                var menus = await _menuService.GetMenusByRole(role);
 
                 if (menus is null || menus.Count == 0)
                     return NotFound(new { message = "No se encontraron menus para el rol especificado." });
@@ -89,13 +93,19 @@ namespace SuiteCoreBackend.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Endpoint para gestion de accesos
+        /// </summary>
+        /// <param name="gidNumber"></param>
+        /// <returns></returns>
         [HttpGet("Roles/{gidNumber}/menus")]
         [Authorize]
         public async Task<ActionResult> GetMenusByRole(string gidNumber)
         {
             try
             {
-                var menus = await _menuService.GetMenusByRole(gidNumber);
+                var menus = await _menuService.GetAllMenusWithAssignment(gidNumber);
 
                 if (menus is null || menus.Count == 0)
                     return NotFound(new { message = "No se encontraron menús asignados a este rol." });
