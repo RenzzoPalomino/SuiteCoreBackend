@@ -16,6 +16,12 @@ namespace SuiteCoreBackend.Services.Interfaces
         Task<List<MenuBlockDto>> GetMenusByRole(string gidNumber);
 
         /// <summary>
+        /// Obtiene todos los menús activos con un indicador de si están asignados
+        /// al rol especificado. Útil para la vista de gestión de roles.
+        /// </summary>
+        Task<List<MenuBlockDto>> GetAllMenusWithAssignment(string gidNumber);
+
+        /// <summary>
         /// Reemplaza los menús activos de un rol: desactiva los existentes
         /// y activa únicamente los menuIds entrantes.
         /// </summary>

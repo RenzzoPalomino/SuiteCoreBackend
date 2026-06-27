@@ -28,9 +28,9 @@ namespace SuiteCoreBackend.Controllers
             {
                 var role = User.FindFirst(ClaimTypes.Role)?.Value;
                 //var role = RoleGroupCodes.NOC; //testing
-                List<string> roles = new List<string>{role};
+                List<string> roles = new List<string> { role };
 
-                var menus = await _menuService.GetMenusForUser(roles);
+                var menus = await _menuService.GetAllMenusWithAssignment(role);
 
                 if (menus is null || menus.Count == 0)
                     return NotFound(new { message = "No se encontraron menus para el rol especificado." });
