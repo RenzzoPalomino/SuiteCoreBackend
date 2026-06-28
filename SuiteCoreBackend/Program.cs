@@ -53,8 +53,8 @@ builder.Services.Configure<JwtSettings>(jwtSection);
 builder.Services.Configure<LdapSettings>(
     builder.Configuration.GetSection("Ldap"));
 
-builder.Services.Configure<RadiusSettings>(
-    builder.Configuration.GetSection("Radius"));
+//builder.Services.Configure<RadiusSettings>(
+//    builder.Configuration.GetSection("Radius"));
 
 builder.Services.Configure<OxidizedSettings>(
     builder.Configuration.GetSection("Oxidized"));
@@ -63,7 +63,7 @@ builder.Services.AddHttpClient<IOxidizedService, OxidizedService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILdapAuthService, LdapAuthService>();
-builder.Services.AddScoped<IRadiusSessionService, RadiusSessionService>();
+//builder.Services.AddScoped<IRadiusSessionService, RadiusSessionService>();
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
 builder.Services.AddHttpClient<INetboxService, NetboxService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();

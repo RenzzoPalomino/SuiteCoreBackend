@@ -14,7 +14,6 @@ public class AuthService : IAuthService
 {
     private readonly ILdapAuthService _ldapAuthService;
     private readonly IJwtService _jwtService;
-    private readonly IRadiusSessionService _radiusSessionService;
     private readonly JwtSettings _jwtSettings; 
     private readonly IMapper _mapper;
     private readonly IUserActivityRepository _userActivityRepository;
@@ -24,14 +23,13 @@ public class AuthService : IAuthService
     public AuthService(
         ILdapAuthService ldapAuthService,
         IJwtService jwtService,
-        IRadiusSessionService radiusSessionService,
+        //IRadiusSessionService radiusSessionService,
         IOptions<JwtSettings> jwtOptions,
         IUserActivityRepository userActivityRepository,
         IMapper mapper)
     {
         _ldapAuthService = ldapAuthService;
         _jwtService = jwtService;
-        _radiusSessionService = radiusSessionService;
         _jwtSettings = jwtOptions.Value;
         _userActivityRepository = userActivityRepository;
         _mapper = mapper;
@@ -75,7 +73,8 @@ public class AuthService : IAuthService
 
     public async Task LogoutAsync(string sessionId, string username)
     {
-        await _radiusSessionService.StopSessionAsync(sessionId, username);
+        throw new NotImplementedException();
+        //await _radiusSessionService.StopSessionAsync(sessionId, username);
     }
 
     #region utilidades de sesion

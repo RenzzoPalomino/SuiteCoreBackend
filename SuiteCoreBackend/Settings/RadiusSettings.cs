@@ -1,5 +1,7 @@
 namespace SuiteCoreBackend.Settings
 {
+    [Obsolete("Esta clase de configuración no se está utilizando actualmente, " +
+        "ya que la funcionalidad de RADIUS ha sido suspendida temporalmente.",true)]
     public class RadiusSettings
     {
         public string Server { get; set; } = string.Empty;

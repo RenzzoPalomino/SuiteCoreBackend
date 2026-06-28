@@ -50,8 +50,8 @@ public class AuthController : ControllerBase
         var sessionId = User.FindFirst("sessionId")?.Value;
         var username = User.FindFirst("username")?.Value;
 
-        if (!string.IsNullOrEmpty(sessionId) && !string.IsNullOrEmpty(username))
-            await _authService.LogoutAsync(sessionId, username);
+        //if (!string.IsNullOrEmpty(sessionId) && !string.IsNullOrEmpty(username))
+            //await _authService.LogoutAsync(sessionId, username);
         //destruir el token en el cliente, ya que no se puede invalidar un JWT en el servidor sin un mecanismo de revocación.
         return Ok(new { message = "Sesión cerrada correctamente." });
     }
