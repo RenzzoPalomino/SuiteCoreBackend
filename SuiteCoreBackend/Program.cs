@@ -147,7 +147,7 @@ var app = builder.Build();
 // ---------------------------------------------------------
 // 7. Configuramos Swagger solo en ambiente de desarrollo
 // ---------------------------------------------------------
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
