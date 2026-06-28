@@ -34,6 +34,8 @@ SuiteCoreBackend/
 │   ├── MonitoringController.cs     # LibreNMS, Grafana, Netbox
 │   ├── OxidizedController.cs       # Dispositivos, versiones y backups Oxidized
 │   └── PermissionController.cs     # Menús por rol (JWT claim)
+│   ├── MonitoringController.cs     # Tipos de dispositivo, paneles Grafana
+│   └── NetboxController.cs         # Regiones e IP addresses de Netbox
 ├── DTOs/
 │   ├── Auth/                       # LoginRequestDto, LoginResponseDto, LdapUserDto, UserSessionDto
 │   ├── Menu/                       # MenuBlockDto, MenuItemDto
@@ -43,6 +45,9 @@ SuiteCoreBackend/
 │   ├── AccountingStatus.cs         # Start = 1, Stop = 2
 │   ├── DateValues.cs               # UTC_MINUS_FIVE = -5
 │   └── RoleGroups.cs               # Constantes de gidNumber por rol
+│   ├── Auth/                       # LoginRequestDto, LoginResponseDto, LdapUserDto
+│   ├── Monitoring/                 # DeviceTypeDto, GrafanaPanelDto
+│   └── Netbox/                     # CreateNetboxRegionDto, NetboxIpAddressDto, etc.
 ├── Helpers/
 │   ├── DateTimeHelper.cs           # GetPeruDateTime() — UTC-5
 │   └── OxidizeHelper.cs            # ConvertToEpoch(), NormalizeOxidizedConfig()

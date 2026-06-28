@@ -14,6 +14,9 @@ namespace SuiteCoreBackend.Infrastructure.Context
         public DbSet<Menu> Menus { get; set; } = null!;
         public DbSet<MenuBlock> MenuBlocks { get; set; } = null!;
         public DbSet<RoleMenu> RoleMenus { get; set; } = null!;
+        public DbSet<NotificationChannel> NotificationChannels { get; set; } = null!;
+        public DbSet<AlertEvent> AlertEvents { get; set; } = null!;
+
         
 
         /// <summary>
@@ -40,6 +43,9 @@ namespace SuiteCoreBackend.Infrastructure.Context
 
 
              
+            modelBuilder.Entity<RoleMenu>();
+            modelBuilder.Entity<NotificationChannel>();
+            modelBuilder.Entity<AlertEvent>();
         }
     }
 }

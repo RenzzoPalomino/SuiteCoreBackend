@@ -71,6 +71,10 @@ builder.Services.AddScoped<IGrafanaRepository, GrafanaRepository>();
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IMenuRepository, MenuRepository>();
 builder.Services.AddScoped<IMenuService, MenuService>();
+builder.Services.AddScoped<INotificationChannelRepository, NotificationChannelRepository>();
+builder.Services.AddHttpClient<INotificationChannelService, NotificationChannelService>();
+builder.Services.AddScoped<IAlertEventRepository, AlertEventRepository>();
+builder.Services.AddHttpClient<IAlertService, AlertService>();
 
 
 

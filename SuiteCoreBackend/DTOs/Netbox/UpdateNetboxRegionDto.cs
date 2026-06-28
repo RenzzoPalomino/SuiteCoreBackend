@@ -1,4 +1,4 @@
-namespace SuiteCoreBackend.DTOs.Monitoring;
+namespace SuiteCoreBackend.DTOs.Netbox;
 
 public class UpdateNetboxRegionDto
 {

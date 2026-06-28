@@ -1,4 +1,4 @@
-using SuiteCoreBackend.DTOs.Monitoring;
+using SuiteCoreBackend.DTOs.Netbox;
 
 namespace SuiteCoreBackend.Services.Interfaces;
 
