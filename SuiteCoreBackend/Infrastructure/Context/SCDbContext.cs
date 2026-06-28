@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
 using SuiteCoreBackend.Models.Entities;
 
 namespace SuiteCoreBackend.Infrastructure.Context
@@ -14,12 +14,9 @@ namespace SuiteCoreBackend.Infrastructure.Context
         public DbSet<Menu> Menus { get; set; } = null!;
         public DbSet<MenuBlock> MenuBlocks { get; set; } = null!;
         public DbSet<RoleMenu> RoleMenus { get; set; } = null!;
-        
+        public DbSet<NotificationChannel> NotificationChannels { get; set; } = null!;
+        public DbSet<AlertEvent> AlertEvents { get; set; } = null!;
 
-        /// <summary>
-        /// Método para configurar el modelo de datos. Aquí puedes definir las relaciones, restricciones y otras configuraciones para tus entidades.
-        /// </summary>
-        /// <param name="modelBuilder"></param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -30,9 +27,8 @@ namespace SuiteCoreBackend.Infrastructure.Context
             modelBuilder.Entity<Menu>();
             modelBuilder.Entity<MenuBlock>();
             modelBuilder.Entity<RoleMenu>();
-
-
-             
+            modelBuilder.Entity<NotificationChannel>();
+            modelBuilder.Entity<AlertEvent>();
         }
     }
 }
