@@ -62,13 +62,15 @@ namespace SuiteCoreBackend.Controllers
 
                 var result = roles.Select(role =>
                 {
-                    var users = _ldapService.GetUsersByGid(role.Id)
+                    var u = _ldapService.GetUsersByGid(role.Id);
+                    var users = u
                         .Select(u => new LdapUserDto
                         {
                             DisplayName = u.DisplayName,
                             FirstName = u.FirstName,
                             LastName = u.LastName,
-                            Username = u.Username
+                            Username = u.Username,
+                            IsActive = u.IsActive
                         }).ToList();
 
                     return new LdapRoleDto
