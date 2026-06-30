@@ -1,12 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
- using Microsoft.IdentityModel.Tokens;
-using SuiteCoreBackend.Helpers;
+using Microsoft.IdentityModel.Tokens;
 using SuiteCoreBackend.Infrastructure.Context;
 using SuiteCoreBackend.Infrastructure.Implementations;
 using SuiteCoreBackend.Infrastructure.Interfaces;
-using Microsoft.IdentityModel.Tokens;
-using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Implementations;
 using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Services.Monitoring;
@@ -63,7 +60,6 @@ builder.Services.AddHttpClient<IOxidizedService, OxidizedService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILdapAuthService, LdapAuthService>();
-//builder.Services.AddScoped<IRadiusSessionService, RadiusSessionService>();
 builder.Services.AddHttpClient<ILibreNmsService, LibreNmsService>();
 builder.Services.AddHttpClient<INetboxService, NetboxService>();
 builder.Services.AddScoped<IGrafanaService, GrafanaService>();
@@ -75,6 +71,13 @@ builder.Services.AddScoped<INotificationChannelRepository, NotificationChannelRe
 builder.Services.AddHttpClient<INotificationChannelService, NotificationChannelService>();
 builder.Services.AddScoped<IAlertEventRepository, AlertEventRepository>();
 builder.Services.AddHttpClient<IAlertService, AlertService>();
+
+builder.Services.Configure<WireGuardSettings>(
+    builder.Configuration.GetSection("WireGuard"));
+builder.Services.Configure<TailscaleSettings>(
+    builder.Configuration.GetSection("Tailscale"));
+builder.Services.AddScoped<IWireGuardService, WireGuardService>();
+builder.Services.AddHttpClient<ITailscaleService, TailscaleService>();
 
 
 
