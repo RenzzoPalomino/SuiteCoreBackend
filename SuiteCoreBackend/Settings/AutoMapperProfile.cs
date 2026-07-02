@@ -16,6 +16,22 @@ namespace SuiteCoreBackend.Settings
             CreateMap<NetboxRegionResult, NetboxRegionDetailDto>().ReverseMap();
             CreateMap<NetboxIpAddressResult, NetboxIpAddressDto>().ReverseMap();
             CreateMap<NetboxStatusResult, NetboxStatusDto>().ReverseMap();
+            CreateMap<NetboxVlanResult, NetboxVlanDto>().ReverseMap();
+            CreateMap<NetboxCableResult, NetboxCableDto>().ReverseMap();
+            CreateMap<NetboxTerminationResult, NetboxTerminationDto>().ReverseMap();
+            CreateMap<NetboxLengthUnitResult, NetboxLengthUnitDto>().ReverseMap();
+            CreateMap<NetboxSiteResult, NetboxSiteDto>().ReverseMap();
+            CreateMap<NetboxModuleTypeProfileResult, NetboxModuleTypeProfileDto>().ReverseMap();
+            CreateMap<NetboxManufacturerResult, NetboxManufacturerDto>().ReverseMap();
+            CreateMap<NetboxDeviceRoleResult, NetboxDeviceRoleDto>().ReverseMap();
+            CreateMap<NetboxDeviceResult, NetboxDeviceDto>().ReverseMap();
+            CreateMap<NetboxDeviceTypeResult, NetboxDeviceTypeDto>().ReverseMap();
+            CreateMap<NetboxManufacturerNestedResult, NetboxManufacturerNestedDto>().ReverseMap();
+            CreateMap<NetboxDeviceRoleNestedResult, NetboxDeviceRoleNestedDto>().ReverseMap();
+            CreateMap<NetboxSiteNestedResult, NetboxSiteNestedDto>().ReverseMap();
+            CreateMap<NetboxRackNestedResult, NetboxRackNestedDto>().ReverseMap();
+            CreateMap<NetboxRackResult, NetboxRackDto>().ReverseMap();
+            CreateMap<NetboxRackWidthResult, NetboxRackWidthDto>().ReverseMap();
 
             CreateMap<NotificationChannel, NotificationChannelDto>().ReverseMap();
             CreateMap<CreateNotificationChannelDto, NotificationChannel>();
