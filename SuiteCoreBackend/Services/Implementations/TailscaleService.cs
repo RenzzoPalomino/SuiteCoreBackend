@@ -87,8 +87,16 @@ namespace SuiteCoreBackend.Services.Implementations
             var lastSeenRaw = device.TryGetProperty("lastSeen", out var ls)
                 ? ls.GetString() : null;
 
-            var isOnline = device.TryGetProperty("online", out var onlineProp)
+            // El campo "online" de la API Free de Tailscale no es confiable.
+            // Fallback: si lastSeen <= 10 sec, el dispositivo se considera online.
+            var isOnlineApi = device.TryGetProperty("online", out var onlineProp)
                 && onlineProp.GetBoolean();
+
+            var isRecentlySeen = lastSeenRaw != null
+                && DateTimeOffset.TryParse(lastSeenRaw, out var seenAt)
+                && (DateTimeOffset.UtcNow - seenAt).TotalSeconds <= 10;
+
+            var isOnline = isOnlineApi || isRecentlySeen;
 
             var lastSeen = isOnline ? "active" : FormatLastSeen(lastSeenRaw);
 
