@@ -32,7 +32,8 @@ public class GrafanaService : IGrafanaService
             return panels.Select(p => new GrafanaPanelDto
             {
                 Name = p.Name,
-                Url = $"{grafanaUrl}/d-solo/{p.DashboardUid}/suite-core-noc-dashboard?orgId=1&panelId={p.PanelId}"
+                Url = $"{grafanaUrl}/d-solo/{p.DashboardUid}/suite-core-noc-dashboard?orgId=1&panelId={p.PanelId}",
+                Category = p.Category
             }).ToList();
         }
         catch (Exception ex)
