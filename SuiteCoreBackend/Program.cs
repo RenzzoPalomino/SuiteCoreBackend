@@ -79,7 +79,10 @@ builder.Services.Configure<TailscaleSettings>(
 builder.Services.AddScoped<IWireGuardService, WireGuardService>();
 builder.Services.AddHttpClient<ITailscaleService, TailscaleService>();
 
+builder.Services.Configure<ScnoSettings>(
     builder.Configuration.GetSection("Scno"));
+builder.Services.AddHttpClient<ISdnService, SdnService>();
+
 
 
 

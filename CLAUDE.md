@@ -32,18 +32,31 @@ Servicios HTTP externos (`OxidizedService`, `LibreNmsService`, `NetboxService`, 
 ```
 SuiteCoreBackend/
 ├── Controllers/
-│   ├── AuthController.cs           # Login, Logout, /me, /admin
-│   ├── LdapController.cs           # CRUD usuarios LDAP (GetByGid, Create, Update, Disable, Enable)
-│   ├── MonitoringController.cs     # LibreNMS, Grafana, Netbox
-│   ├── OxidizedController.cs       # Dispositivos, versiones y backups Oxidized
-│   ├── PermissionController.cs     # Menús por rol (JWT claim)
-│   └── VpnController.cs            # WireGuard, Tailscale, Access Policy, Stats
+│   ├── AuthController.cs                # Login, Logout, /me, /admin
+│   ├── LdapController.cs                # CRUD usuarios LDAP (GetByGid, Create, Update, Disable, Enable)
+│   ├── MonitoringController.cs          # LibreNMS device types, Grafana panels
+│   ├── NetboxController.cs              # CRUD completo Netbox: regions, IPs, vlans, cables,
+│   │                                    # sites, devices, racks, manufacturers, device-roles,
+│   │                                    # module-type-profiles
+│   ├── OxidizedController.cs            # Dispositivos, versiones y backups Oxidized
+│   ├── PermissionController.cs          # Menús por rol (JWT claim)
+│   ├── AlertController.cs               # Webhooks Grafana y LibreNMS → Telegram
+│   ├── NotificationChannelController.cs # CRUD canales Telegram + test
+│   └── VpnController.cs                 # WireGuard, Tailscale, Access Policy, Stats
 ├── DTOs/
 │   ├── Auth/                       # LoginRequestDto, LoginResponseDto, LdapUserDto,
 │   │                               # UserSessionDto, LdapRoleDto,
 │   │                               # CreateLdapUserDto, UpdateLdapUserDto
+│   ├── Alert/                      # GrafanaWebhookDto, LibreNmsWebhookDto
 │   ├── Menu/                       # MenuBlockDto, MenuItemDto, AssignMenusRequestDto
-│   ├── Monitoring/                 # DeviceTypeDto, GrafanaPanelDto, Netbox*Dto
+│   ├── Monitoring/                 # DeviceTypeDto, GrafanaPanelDto
+│   ├── Netbox/                     # NetboxRegionDto, NetboxIpAddressDto, NetboxVlanDto,
+│   │                               # NetboxCableDto, NetboxSiteDto, NetboxDeviceDto,
+│   │                               # NetboxRackDto, NetboxManufacturerDto,
+│   │                               # NetboxDeviceRoleDto, NetboxModuleTypeProfileDto
+│   │                               # + Create*/Update* variants para cada recurso
+│   ├── Notification/               # NotificationChannelDto, CreateNotificationChannelDto,
+│   │                               # UpdateNotificationChannelDto, TestNotificationDirectDto
 │   ├── Oxidized/                   # OxidizedDeviceDto, OxidizedBackupDto, OxidizedVersionDto
 │   └── Vpn/                        # VpnGatewayStatusDto, WireGuardStatusDto, WireGuardPeerDto,
 │                                   # WireGuardStatsDto, TailscaleStatusDto, TailscalePeerDto,
@@ -67,7 +80,8 @@ SuiteCoreBackend/
 │   ├── Interfaces/                 # IAuthService, IJwtService, ILdapAuthService,
 │   │                               # IRadiusSessionService, IGrafanaService,
 │   │                               # ILibreNmsService, INetboxService, IOxidizedService,
-│   │                               # IMenuService, IWireGuardService, ITailscaleService
+│   │                               # IMenuService, IWireGuardService, ITailscaleService,
+│   │                               # IAlertService, INotificationChannelService
 │   └── Implementations/            # Implementaciones de cada interfaz
 ├── Infrastructure/
 │   ├── Context/SCDbContext.cs      # DbContext — GrafanaPanels, UserActivities,
@@ -112,16 +126,45 @@ SuiteCoreBackend/
 | GET    | `/Menus` | `[Authorize]` | Menús accesibles según gidNumber del JWT  |
 
 ### Monitoring — `/api/monitoring`
-| Método | Ruta                    | Auth | Descripción                        |
-|--------|-------------------------|------|------------------------------------|
-| GET    | `/device-types`         | —    | Tipos de dispositivo LibreNMS      |
-| GET    | `/grafana-panels`       | —    | Paneles Grafana desde DB           |
-| GET    | `/netbox-regions`       | —    | Lista regiones Netbox              |
-| GET    | `/netbox-regions/{id}`  | —    | Detalle de región Netbox           |
-| POST   | `/netbox-regions`       | —    | Crea región en Netbox              |
-| PATCH  | `/netbox-regions/{id}`  | —    | Actualiza región en Netbox         |
-| DELETE | `/netbox-regions/{id}`  | —    | Elimina región en Netbox           |
-| GET    | `/netbox-ip-addresses`  | —    | Lista IPs desde Netbox             |
+| Método | Ruta             | Auth | Descripción                   |
+|--------|------------------|------|-------------------------------|
+| GET    | `/device-types`  | —    | Tipos de dispositivo LibreNMS |
+| GET    | `/grafana-panels`| —    | Paneles Grafana desde DB      |
+
+### Netbox — `/api/netbox`
+CRUD completo para cada recurso. Todos los endpoints siguen el patrón `GET /`, `GET /{id}`, `POST /`, `PATCH /{id}`, `DELETE /{id}`.
+
+| Recurso             | Ruta base                    | Auth |
+|---------------------|------------------------------|------|
+| Regiones            | `/regions`                   | —    |
+| IPs                 | `/ip-addresses`              | —    |
+| VLANs               | `/vlans`                     | —    |
+| Cables              | `/cables`                    | —    |
+| Sitios              | `/sites`                     | —    |
+| Dispositivos        | `/devices`                   | —    |
+| Racks               | `/racks`                     | —    |
+| Fabricantes         | `/manufacturers`             | —    |
+| Roles de dispositivo| `/device-roles`              | —    |
+| Module Type Profiles| `/module-type-profiles`      | —    |
+
+### Alertas — `/api/alerts`
+| Método | Ruta        | Auth | Descripción                                          |
+|--------|-------------|------|------------------------------------------------------|
+| POST   | `/grafana`  | —    | Webhook Grafana → procesa alerta → notifica Telegram |
+| POST   | `/librenms` | —    | Webhook LibreNMS → procesa alerta → notifica Telegram|
+
+Ambos aceptan `?channelId=N` opcional para enviar a un canal específico; sin él, notifica a todos los canales activos.
+
+### Canales de Notificación — `/api/notification-channels`
+| Método | Ruta              | Auth | Descripción                                    |
+|--------|-------------------|------|------------------------------------------------|
+| GET    | `/`               | —    | Lista todos los canales                        |
+| GET    | `/{id}`           | —    | Detalle de un canal                            |
+| POST   | `/`               | —    | Crea canal (BotToken, ChatId, Name)            |
+| PUT    | `/{id}`           | —    | Actualiza canal                                |
+| DELETE | `/{id}`           | —    | Elimina canal                                  |
+| POST   | `/{id}/test`      | —    | Envía mensaje de prueba al canal               |
+| POST   | `/test-direct`    | —    | Envía prueba con BotToken y ChatId en el body  |
 
 ### Oxidized — `/api/oxidized`
 | Método | Ruta                            | Auth          | Descripción                        |
@@ -191,9 +234,11 @@ POST /api/auth/logout
 | ILibreNmsService      | LibreNmsService      | AddHttpClient  | Consulta tipos de dispositivo LibreNMS                  |
 | INetboxService        | NetboxService        | AddHttpClient  | CRUD regiones e IPs en Netbox                           |
 | IOxidizedService      | OxidizedService      | AddHttpClient  | Dispositivos, versiones y backups de Oxidized           |
-| IMenuService          | MenuService          | Scoped         | Obtiene menús accesibles por gidNumbers del usuario     |
-| IWireGuardService     | WireGuardService     | Scoped         | Estado WireGuard y métricas via SSH (SSH.NET)           |
-| ITailscaleService     | TailscaleService     | AddHttpClient  | Peers Tailscale via REST API + política de acceso VPN   |
+| IMenuService                | MenuService                | Scoped         | Obtiene menús accesibles por gidNumbers del usuario     |
+| IWireGuardService           | WireGuardService           | Scoped         | Estado WireGuard y métricas via SSH (SSH.NET)           |
+| ITailscaleService           | TailscaleService           | AddHttpClient  | Peers Tailscale via REST API + política de acceso VPN   |
+| IAlertService               | AlertService               | Scoped         | Procesa webhooks de Grafana/LibreNMS → Telegram         |
+| INotificationChannelService | NotificationChannelService | Scoped         | CRUD canales Telegram + envío de mensajes de prueba     |
 
 ### Métodos clave de ILdapAuthService
 ```csharp
@@ -219,6 +264,17 @@ Task<WireGuardStatsDto>   GetStatsAsync()          // SSH → cat /proc/net/dev 
 Task<TailscaleStatusDto> GetStatusAsync()  // GET https://api.tailscale.com/api/v2/tailnet/{tailnet}/devices
 VpnAccessPolicyDto       GetAccessPolicy() // Política estática hardcodeada (VLAN50 → redes internas + Internet)
 ```
+
+### Comportamiento del campo `online` de Tailscale
+El campo `online` de la REST API de Tailscale es intermitente — unas llamadas lo incluyen, otras no. La implementación usa doble condición con OR:
+```csharp
+var isOnlineApi    = device.TryGetProperty("online", out var p) && p.GetBoolean();
+var isRecentlySeen = lastSeenRaw != null
+    && DateTimeOffset.TryParse(lastSeenRaw, out var dt)
+    && (DateTimeOffset.UtcNow - dt).TotalSeconds <= 10;
+var isOnline = isOnlineApi || isRecentlySeen;
+```
+El threshold de `lastSeen` es 10 segundos — suficientemente bajo para no generar falsos positivos, y sirve de seguro cuando `online` no llega en el JSON.
 
 ## Repositorios (Infrastructure)
 
@@ -257,13 +313,16 @@ Task RemoveMenuFromRole(string gidNumber, int menuId)
 
 ## DTOs
 
-| Carpeta     | DTOs                                                                                              |
-|-------------|---------------------------------------------------------------------------------------------------|
-| Auth/       | LoginRequestDto, LoginResponseDto, LdapUserDto, UserSessionDto, LdapRoleDto, CreateLdapUserDto, UpdateLdapUserDto |
-| Menu/       | MenuBlockDto `{ Block, Order, Menus }`, MenuItemDto `{ Id, Name, Slug, IsAssigned }`, AssignMenusRequestDto |
-| Monitoring/ | DeviceTypeDto, GrafanaPanelDto, NetboxRegionDto, NetboxRegionDetailDto, CreateNetboxRegionDto, UpdateNetboxRegionDto, NetboxIpAddressDto |
-| Oxidized/   | OxidizedDeviceDto, OxidizedBackupDto, OxidizedVersionDto                                         |
-| Vpn/        | VpnGatewayStatusDto, WireGuardStatusDto, WireGuardPeerDto, WireGuardStatsDto, TailscaleStatusDto, TailscalePeerDto, VpnAccessPolicyDto |
+| Carpeta       | DTOs                                                                                              |
+|---------------|---------------------------------------------------------------------------------------------------|
+| Auth/         | LoginRequestDto, LoginResponseDto, LdapUserDto, UserSessionDto, LdapRoleDto, CreateLdapUserDto, UpdateLdapUserDto |
+| Alert/        | GrafanaWebhookDto, LibreNmsWebhookDto                                                             |
+| Menu/         | MenuBlockDto `{ Block, Order, Menus }`, MenuItemDto `{ Id, Name, Slug, IsAssigned }`, AssignMenusRequestDto |
+| Monitoring/   | DeviceTypeDto, GrafanaPanelDto                                                                    |
+| Netbox/       | NetboxRegionDto, NetboxIpAddressDto, NetboxVlanDto, NetboxCableDto, NetboxSiteDto, NetboxDeviceDto, NetboxRackDto, NetboxManufacturerDto, NetboxDeviceRoleDto, NetboxModuleTypeProfileDto + Create*/Update* por cada recurso |
+| Notification/ | NotificationChannelDto, CreateNotificationChannelDto, UpdateNotificationChannelDto, TestNotificationDirectDto |
+| Oxidized/     | OxidizedDeviceDto, OxidizedBackupDto, OxidizedVersionDto                                         |
+| Vpn/          | VpnGatewayStatusDto, WireGuardStatusDto, WireGuardPeerDto, WireGuardStatsDto, TailscaleStatusDto, TailscalePeerDto, VpnAccessPolicyDto |
 
 ## Integaciones Externas
 
@@ -395,7 +454,7 @@ NetboxStatusResult ↔ NetboxStatusDto
 - **Listo:** Registro de sesiones web en tabla `useractivities`
 - **Listo:** Paneles Grafana dinámicos desde tabla `grafanapanels`
 - **Listo:** Integración Oxidized — dispositivos, versiones, backups
-- **Listo:** Integración Netbox — regiones e IPs (CRUD)
+- **Listo:** Integración Netbox — CRUD completo: regiones, IPs, VLANs, cables, sitios, dispositivos, racks, fabricantes, roles, module-type-profiles (NetboxController `/api/netbox`)
 - **Listo:** Integración LibreNMS — tipos de dispositivo
 - **Listo:** LDAP GetRoles() y GetUsersByGid() con campo IsActive
 - **Listo:** LDAP CreateUser, UpdateUser, DisableUser (soft-delete), EnableUser
@@ -403,9 +462,11 @@ NetboxStatusResult ↔ NetboxStatusDto
 - **Listo:** MenuRepository con filtro por gidNumbers + menús públicos
 - **Listo:** MenuService.GetMenusForUser() — mapea a MenuBlockDto agrupado
 - **Listo:** VPN Dashboard — WireGuard (SSH), Tailscale (REST API), Access Policy, Bandwidth Stats
+- **Listo:** Sistema de alertas — webhooks Grafana y LibreNMS → Telegram (AlertController + AlertService)
+- **Listo:** CRUD canales de notificación Telegram con test directo (NotificationChannelController)
 - **En progreso:** PermissionController — GET /api/permission/Menus activo, faltan endpoints de gestión (asignar/desasignar)
 - **Suspendido:** RADIUS Accounting-Start en login — RADIUS es para equipos de red, no sesiones web
-- **Pendiente:** Restaurar `[Authorize]` en `MonitoringController` y `VpnController` (sin auth actualmente)
+- **Pendiente:** Restaurar `[Authorize]` en `MonitoringController`, `NetboxController`, `AlertController`, `NotificationChannelController` y `VpnController` (sin auth actualmente)
 - **Pendiente:** Endpoints admin de gestión de roles-menús (AssignMenuToRole, RemoveMenuFromRole)
 
 ## Puertos Locales
