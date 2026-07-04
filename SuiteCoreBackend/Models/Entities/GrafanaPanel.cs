@@ -23,5 +23,9 @@ namespace SuiteCoreBackend.Models.Entities
         [Required]
         [Column("panelid")]
         public int PanelId { get; set; }
+
+        [Required]
+        [Column("category")]
+        public string Category { get; set; } = string.Empty;
     }
 }
