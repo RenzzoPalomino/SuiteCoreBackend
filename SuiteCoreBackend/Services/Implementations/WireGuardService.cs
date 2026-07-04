@@ -137,11 +137,15 @@ namespace SuiteCoreBackend.Services.Implementations
                     Handshake = handshakeRaw ?? "Sin handshake",
                     RxBytes = rx,
                     TxBytes = tx,
-                    IsOnline = isOnline
+                    IsOnline = isOnline,
+                    LastSeen = isOnline ? "active" : FormatHandshake(handshakeRaw)
                 });
             }
 
-            return peers;
+            return peers
+                .OrderByDescending(p => p.IsOnline)
+                .ThenBy(p => p.ClientName)
+                .ToList();
         }
 
         // Busca el AllowedIPs de un peer en wg0.conf para resolver su nombre legible.
@@ -237,6 +241,21 @@ namespace SuiteCoreBackend.Services.Implementations
         {
             var match = Regex.Match(conf, @"Address\s*=\s*([\d.]+)");
             return match.Success ? match.Groups[1].Value : string.Empty;
+        }
+
+        // Convierte el texto de handshake de wg show a formato legible: "5m ago", "2h ago", "3d ago"
+        private static string FormatHandshake(string? handshake)
+        {
+            if (string.IsNullOrWhiteSpace(handshake)) return "nunca";
+
+            var days    = Regex.Match(handshake, @"(\d+)\s+day");
+            var hours   = Regex.Match(handshake, @"(\d+)\s+hour");
+            var minutes = Regex.Match(handshake, @"(\d+)\s+minute");
+
+            if (days.Success)    return $"{days.Groups[1].Value}d ago";
+            if (hours.Success)   return $"{hours.Groups[1].Value}h ago";
+            if (minutes.Success) return $"{minutes.Groups[1].Value}m ago";
+            return "hace un momento";
         }
 
         private static string FormatUptime(double totalSeconds)
