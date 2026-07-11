@@ -82,6 +82,7 @@ builder.Services.AddHttpClient<ITailscaleService, TailscaleService>();
 builder.Services.Configure<ScnoSettings>(
     builder.Configuration.GetSection("Scno"));
 builder.Services.AddHttpClient<ISdnService, SdnService>();
+builder.Services.AddHttpClient<IGrafanaEmbedService, GrafanaEmbedService>();
 
 
 
