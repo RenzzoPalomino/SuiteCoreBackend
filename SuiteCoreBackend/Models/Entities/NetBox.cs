@@ -269,6 +269,30 @@ public class NetboxDeviceResult
     public NetboxStatusResult Status { get; set; } = new();
 }
 
+public class NetboxDeviceTypeResponse
+{
+    [JsonPropertyName("results")]
+    public List<NetboxDeviceTypeResult> Results { get; set; } = new();
+}
+
+public class NetboxAirflowResult
+{
+    [JsonPropertyName("value")]
+    public string Value { get; set; } = string.Empty;
+
+    [JsonPropertyName("label")]
+    public string Label { get; set; } = string.Empty;
+}
+
+public class NetboxWeightUnitResult
+{
+    [JsonPropertyName("value")]
+    public string Value { get; set; } = string.Empty;
+
+    [JsonPropertyName("label")]
+    public string Label { get; set; } = string.Empty;
+}
+
 public class NetboxDeviceTypeResult
 {
     [JsonPropertyName("id")]
@@ -279,6 +303,27 @@ public class NetboxDeviceTypeResult
 
     [JsonPropertyName("model")]
     public string Model { get; set; } = string.Empty;
+
+    [JsonPropertyName("slug")]
+    public string Slug { get; set; } = string.Empty;
+
+    [JsonPropertyName("u_height")]
+    public double? UHeight { get; set; }
+
+    [JsonPropertyName("airflow")]
+    public NetboxAirflowResult? Airflow { get; set; }
+
+    [JsonPropertyName("weight")]
+    public double? Weight { get; set; }
+
+    [JsonPropertyName("weight_unit")]
+    public NetboxWeightUnitResult? WeightUnit { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("device_count")]
+    public int DeviceCount { get; set; }
 }
 
 public class NetboxManufacturerNestedResult
@@ -360,4 +405,142 @@ public class NetboxRackWidthResult
 
     [JsonPropertyName("label")]
     public string Label { get; set; } = string.Empty;
+}
+
+public class NetboxVirtualMachineResponse
+{
+    [JsonPropertyName("results")]
+    public List<NetboxVirtualMachineResult> Results { get; set; } = new();
+}
+
+public class NetboxVirtualMachineResult
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("virtual_machine_type")]
+    public object? VirtualMachineType { get; set; }
+
+    [JsonPropertyName("role")]
+    public NetboxDeviceRoleNestedResult? Role { get; set; }
+
+    [JsonPropertyName("status")]
+    public NetboxStatusResult Status { get; set; } = new();
+
+    [JsonPropertyName("start_on_boot")]
+    public NetboxStartOnBootResult? StartOnBoot { get; set; }
+
+    [JsonPropertyName("site")]
+    public NetboxSiteNestedResult? Site { get; set; }
+
+    [JsonPropertyName("cluster")]
+    public NetboxClusterNestedResult? Cluster { get; set; }
+
+    [JsonPropertyName("primary_ip")]
+    public NetboxPrimaryIpResult? PrimaryIp { get; set; }
+
+    [JsonPropertyName("primary_ip4")]
+    public NetboxPrimaryIpResult? PrimaryIp4 { get; set; }
+
+    [JsonPropertyName("vcpus")]
+    public double? Vcpus { get; set; }
+
+    [JsonPropertyName("memory")]
+    public int? Memory { get; set; }
+
+    [JsonPropertyName("disk")]
+    public int? Disk { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+}
+
+public class NetboxStartOnBootResult
+{
+    [JsonPropertyName("value")]
+    public string Value { get; set; } = string.Empty;
+
+    [JsonPropertyName("label")]
+    public string Label { get; set; } = string.Empty;
+}
+
+public class NetboxClusterNestedResult
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+}
+
+public class NetboxPrimaryIpResult
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("family")]
+    public NetboxIpFamilyResult Family { get; set; } = new();
+
+    [JsonPropertyName("address")]
+    public string Address { get; set; } = string.Empty;
+}
+
+public class NetboxIpFamilyResult
+{
+    [JsonPropertyName("value")]
+    public int Value { get; set; }
+
+    [JsonPropertyName("label")]
+    public string Label { get; set; } = string.Empty;
+}
+
+public class NetboxClusterResponse
+{
+    [JsonPropertyName("results")]
+    public List<NetboxClusterResult> Results { get; set; } = new();
+}
+
+public class NetboxClusterResult
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("type")]
+    public NetboxClusterTypeNestedResult Type { get; set; } = new();
+
+    [JsonPropertyName("status")]
+    public NetboxStatusResult Status { get; set; } = new();
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+
+    [JsonPropertyName("device_count")]
+    public int DeviceCount { get; set; }
+
+    [JsonPropertyName("virtualmachine_count")]
+    public int VirtualMachineCount { get; set; }
+
+    [JsonPropertyName("allocated_vcpus")]
+    public double? AllocatedVcpus { get; set; }
+
+    [JsonPropertyName("allocated_memory")]
+    public long? AllocatedMemory { get; set; }
+
+    [JsonPropertyName("allocated_disk")]
+    public long? AllocatedDisk { get; set; }
+}
+
+public class NetboxClusterTypeNestedResult
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
 }

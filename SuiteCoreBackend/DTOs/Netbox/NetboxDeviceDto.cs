@@ -16,6 +16,25 @@ public class NetboxDeviceTypeDto
     public int Id { get; set; }
     public NetboxManufacturerNestedDto Manufacturer { get; set; } = new();
     public string Model { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
+    public int UHeight { get; set; }
+    public NetboxAirflowDto? Airflow { get; set; }
+    public double? Weight { get; set; }
+    public NetboxWeightUnitDto? WeightUnit { get; set; }
+    public string? Description { get; set; }
+    public int DeviceCount { get; set; }
+}
+
+public class NetboxAirflowDto
+{
+    public string Value { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+}
+
+public class NetboxWeightUnitDto
+{
+    public string Value { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
 }
 
 public class NetboxManufacturerNestedDto

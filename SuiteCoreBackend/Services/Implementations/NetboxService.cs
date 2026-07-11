@@ -2059,6 +2059,103 @@ public class NetboxService : INetboxService
         }
     }
 
+    public async Task<IEnumerable<NetboxDeviceTypeDto>> GetDeviceTypesAsync()
+    {
+        try
+        {
+            var url = _config["Netbox:Url"];
+            var token = _config["Netbox:Token"];
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
+            }
+
+            var requestUrl = $"{url.TrimEnd('/')}/api/dcim/device-types/";
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var netboxResponse = JsonSerializer.Deserialize<NetboxDeviceTypeResponse>(json, options);
+
+            if (netboxResponse?.Results == null)
+            {
+                return Enumerable.Empty<NetboxDeviceTypeDto>();
+            }
+
+            return _mapper.Map<List<NetboxDeviceTypeDto>>(netboxResponse.Results);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error al obtener los tipos de dispositivo desde Netbox", ex);
+        }
+    }
+
+    public async Task<NetboxDeviceTypeDto> GetDeviceTypeByIdAsync(int id)
+    {
+        try
+        {
+            var url = _config["Netbox:Url"];
+            var token = _config["Netbox:Token"];
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
+            }
+
+            var requestUrl = $"{url.TrimEnd('/')}/api/dcim/device-types/{id}/";
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw new KeyNotFoundException($"No se encontró el tipo de dispositivo con ID {id} en Netbox.");
+                }
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error de Netbox: {errorContent}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var deviceTypeResult = JsonSerializer.Deserialize<NetboxDeviceTypeResult>(json, options);
+
+            if (deviceTypeResult == null)
+            {
+                throw new Exception("Error al deserializar el tipo de dispositivo obtenido desde Netbox.");
+            }
+
+            return _mapper.Map<NetboxDeviceTypeDto>(deviceTypeResult);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al obtener el tipo de dispositivo con ID {id} desde Netbox", ex);
+        }
+    }
+
     public async Task<IEnumerable<NetboxDeviceDto>> GetDevicesAsync()
     {
         try
@@ -2564,6 +2661,200 @@ public class NetboxService : INetboxService
         catch (Exception ex)
         {
             throw new Exception($"Error al eliminar el rack con ID {id} en Netbox", ex);
+        }
+    }
+
+    public async Task<IEnumerable<NetboxVirtualMachineDto>> GetVirtualMachinesAsync()
+    {
+        try
+        {
+            var url = _config["Netbox:Url"];
+            var token = _config["Netbox:Token"];
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
+            }
+
+            var requestUrl = $"{url.TrimEnd('/')}/api/virtualization/virtual-machines/";
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var netboxResponse = JsonSerializer.Deserialize<NetboxVirtualMachineResponse>(json, options);
+
+            if (netboxResponse?.Results == null)
+            {
+                return Enumerable.Empty<NetboxVirtualMachineDto>();
+            }
+
+            return _mapper.Map<List<NetboxVirtualMachineDto>>(netboxResponse.Results);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error al obtener las máquinas virtuales desde Netbox", ex);
+        }
+    }
+
+    public async Task<NetboxVirtualMachineDto> GetVirtualMachineByIdAsync(int id)
+    {
+        try
+        {
+            var url = _config["Netbox:Url"];
+            var token = _config["Netbox:Token"];
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
+            }
+
+            var requestUrl = $"{url.TrimEnd('/')}/api/virtualization/virtual-machines/{id}/";
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw new KeyNotFoundException($"No se encontró la máquina virtual con ID {id} en Netbox.");
+                }
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error de Netbox: {errorContent}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var vmResult = JsonSerializer.Deserialize<NetboxVirtualMachineResult>(json, options);
+
+            if (vmResult == null)
+            {
+                throw new Exception("Error al deserializar la máquina virtual obtenida desde Netbox.");
+            }
+
+            return _mapper.Map<NetboxVirtualMachineDto>(vmResult);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al obtener la máquina virtual con ID {id} desde Netbox", ex);
+        }
+    }
+
+    public async Task<IEnumerable<NetboxClusterDto>> GetClustersAsync()
+    {
+        try
+        {
+            var url = _config["Netbox:Url"];
+            var token = _config["Netbox:Token"];
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
+            }
+
+            var requestUrl = $"{url.TrimEnd('/')}/api/virtualization/clusters/";
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var netboxResponse = JsonSerializer.Deserialize<NetboxClusterResponse>(json, options);
+
+            if (netboxResponse?.Results == null)
+            {
+                return Enumerable.Empty<NetboxClusterDto>();
+            }
+
+            return _mapper.Map<List<NetboxClusterDto>>(netboxResponse.Results);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error al obtener los clusters desde Netbox", ex);
+        }
+    }
+
+    public async Task<NetboxClusterDto> GetClusterByIdAsync(int id)
+    {
+        try
+        {
+            var url = _config["Netbox:Url"];
+            var token = _config["Netbox:Token"];
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
+            }
+
+            var requestUrl = $"{url.TrimEnd('/')}/api/virtualization/clusters/{id}/";
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw new KeyNotFoundException($"No se encontró el cluster con ID {id} en Netbox.");
+                }
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error de Netbox: {errorContent}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var clusterResult = JsonSerializer.Deserialize<NetboxClusterResult>(json, options);
+
+            if (clusterResult == null)
+            {
+                throw new Exception("Error al deserializar el cluster obtenido desde Netbox.");
+            }
+
+            return _mapper.Map<NetboxClusterDto>(clusterResult);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al obtener el cluster con ID {id} desde Netbox", ex);
         }
     }
 }
