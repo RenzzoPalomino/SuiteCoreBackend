@@ -712,6 +712,40 @@ public class NetboxController : ControllerBase
         }
     }
 
+    [HttpGet("device-types")]
+    //[Authorize]
+    public async Task<IActionResult> GetDeviceTypes()
+    {
+        try
+        {
+            var result = await _netboxService.GetDeviceTypesAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpGet("device-types/{id:int}")]
+    //[Authorize]
+    public async Task<IActionResult> GetDeviceTypeById(int id)
+    {
+        try
+        {
+            var result = await _netboxService.GetDeviceTypeByIdAsync(id);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
     [HttpGet("devices")]
     //[Authorize]
     public async Task<IActionResult> GetDevices()
@@ -875,6 +909,74 @@ public class NetboxController : ControllerBase
         {
             await _netboxService.DeleteRackAsync(id);
             return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpGet("virtual-machines")]
+    //[Authorize]
+    public async Task<IActionResult> GetVirtualMachines()
+    {
+        try
+        {
+            var result = await _netboxService.GetVirtualMachinesAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpGet("virtual-machines/{id:int}")]
+    //[Authorize]
+    public async Task<IActionResult> GetVirtualMachineById(int id)
+    {
+        try
+        {
+            var result = await _netboxService.GetVirtualMachineByIdAsync(id);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpGet("clusters")]
+    //[Authorize]
+    public async Task<IActionResult> GetClusters()
+    {
+        try
+        {
+            var result = await _netboxService.GetClustersAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, details = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpGet("clusters/{id:int}")]
+    //[Authorize]
+    public async Task<IActionResult> GetClusterById(int id)
+    {
+        try
+        {
+            var result = await _netboxService.GetClusterByIdAsync(id);
+            return Ok(result);
         }
         catch (KeyNotFoundException ex)
         {

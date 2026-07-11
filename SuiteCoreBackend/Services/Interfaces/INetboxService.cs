@@ -54,4 +54,10 @@ public interface INetboxService
     Task<NetboxRackDto> CreateRackAsync(CreateNetboxRackDto dto);
     Task<NetboxRackDto> UpdateRackAsync(int id, UpdateNetboxRackDto dto);
     Task<bool> DeleteRackAsync(int id);
+    Task<IEnumerable<NetboxDeviceTypeDto>> GetDeviceTypesAsync();
+    Task<NetboxDeviceTypeDto> GetDeviceTypeByIdAsync(int id);
+    Task<IEnumerable<NetboxVirtualMachineDto>> GetVirtualMachinesAsync();
+    Task<NetboxVirtualMachineDto> GetVirtualMachineByIdAsync(int id);
+    Task<IEnumerable<NetboxClusterDto>> GetClustersAsync();
+    Task<NetboxClusterDto> GetClusterByIdAsync(int id);
 }
