@@ -69,7 +69,7 @@ namespace SuiteCoreBackend.Services.Implementations
                     _settings.BaseDn,
                     "(|(objectClass=group)(objectClass=groupOfNames)(objectClass=posixGroup))",
                     SearchScope.Subtree,
-                    "cn", "gidNumber"
+                    "cn", "gidNumber", "description"
                 );
 
                 var response = (SearchResponse)connection.SendRequest(search);

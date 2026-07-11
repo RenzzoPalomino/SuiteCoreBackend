@@ -26,5 +26,8 @@ namespace SuiteCoreBackend.DTOs.Vpn
         /// ocurrió hace menos de 3 minutos (intervalo normal de renegociación WireGuard).
         /// </summary>
         public bool IsOnline { get; set; }
+
+        /// <summary>Última vez visto en formato legible (ej. "active", "5m ago", "2h ago", "3d ago").</summary>
+        public string LastSeen { get; set; } = string.Empty;
     }
 }
