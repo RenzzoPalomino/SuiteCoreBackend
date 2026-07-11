@@ -1,26 +1,48 @@
-﻿using SuiteCoreBackend.Models.Entities;
+﻿using SuiteCoreBackend.DTOs.Auth;
+using SuiteCoreBackend.Models.Entities;
 
 namespace SuiteCoreBackend.Services.Interfaces
 {
     public interface ILdapAuthService
     {
         /// <summary>
-        /// Metodo para autenticar un usuario en LDAP
+        /// Autentica un usuario contra el directorio LDAP mediante bind con sus credenciales.
+        /// Retorna null si el usuario no existe; lanza excepción si la contraseña es incorrecta.
         /// </summary>
-        /// <param name="username"></param>
-        /// <param name="password"></param>
-        /// <returns></returns>
         LdapUser? Authenticate(string username, string password);
+
         /// <summary>
-        /// Método para obtener todos los roles de LDAP
+        /// Obtiene todos los grupos (roles) definidos en el directorio LDAP.
         /// </summary>
-        /// <returns></returns>
         List<LdapRole> GetRoles();
+
         /// <summary>
-        /// Método para obtener todos los usuarios de LDAP
+        /// Obtiene los usuarios que pertenecen a un gidNumber dado,
+        /// incluyendo miembros primarios (gidNumber en el usuario) y suplementarios (memberUid en el grupo).
         /// </summary>
-        /// <param name="gidNumber"></param>
-        /// <returns></returns>
         List<LdapUser> GetUsersByGid(string gidNumber);
+
+        /// <summary>
+        /// Crea un nuevo usuario en LDAP bajo ou=People con los objectClass inetOrgPerson y posixAccount.
+        /// El uidNumber se genera automáticamente tomando el máximo existente + 1.
+        /// </summary>
+        LdapUser CreateUser(CreateLdapUserDto dto);
+
+        /// <summary>
+        /// Actualiza el nombre, apellido y opcionalmente el rol (gidNumber) de un usuario existente en LDAP.
+        /// </summary>
+        LdapUser UpdateUser(string username, UpdateLdapUserDto dto);
+
+        /// <summary>
+        /// Deshabilita un usuario sin eliminarlo del directorio LDAP (soft delete).
+        /// Invalida la contraseña con un hash bloqueado e indica el estado con description=DISABLED.
+        /// </summary>
+        void DisableUser(string username);
+
+        /// <summary>
+        /// Rehabilita un usuario previamente deshabilitado, asignándole la contraseña por defecto
+        /// configurada en LdapSettings:DefaultPassword.
+        /// </summary>
+        void EnableUser(string username);
     }
 }
