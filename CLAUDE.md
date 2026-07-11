@@ -58,7 +58,8 @@ SuiteCoreBackend/
 │   ├── Notification/               # NotificationChannelDto, CreateNotificationChannelDto,
 │   │                               # UpdateNotificationChannelDto, TestNotificationDirectDto
 │   ├── Oxidized/                   # OxidizedDeviceDto, OxidizedBackupDto, OxidizedVersionDto
-│   └── Vpn/                        # VpnGatewayStatusDto, WireGuardStatusDto, WireGuardPeerDto,
+│   └── Vpn/                        # VpnGatewayStatusDto, WireGuardStatusDto,
+│                                   # WireGuardPeerDto (+ LastSeen formateado),
 │                                   # WireGuardStatsDto, TailscaleStatusDto, TailscalePeerDto,
 │                                   # VpnAccessPolicyDto, AccessDestinationDto
 ├── Enums/
@@ -407,6 +408,9 @@ private string RunSudoCommand(SshClient client, string command)
 - **Nombre del peer**: busca comentario `# Name` en wg0.conf sobre la línea `PublicKey`; si no existe, usa `"Cliente-{lastOctet}"` de la IP VPN
 - **RX/TX**: parseados de `"13.67 MiB received, 29.48 MiB sent"` → convertidos a bytes
 - **Red VPN**: extraída del campo `Address` en `[Interface]` de wg0.conf
+- **Ordenamiento de peers**: online primero, luego por `ClientName` alfabético (igual que Tailscale)
+- **LastSeen**: campo formateado en `WireGuardPeerDto` — `"active"` si online, `"5m ago"` / `"2h ago"` / `"3d ago"` si no. Calculado por `FormatHandshake()` a partir del texto raw de `wg show`
+- **GetRoles()**: el `SearchRequest` LDAP debe incluir explícitamente `"description"` entre los atributos solicitados — LDAP solo devuelve lo que se pide
 
 ### Política de acceso VPN (estática)
 Origen: `172.16.40.0/24` → acceso permitido a: `172.16.20.0/24`, `172.16.30.0/24`, `172.16.50.0/24`, `172.16.80.0/24`, Internet
@@ -462,6 +466,8 @@ NetboxStatusResult ↔ NetboxStatusDto
 - **Listo:** MenuRepository con filtro por gidNumbers + menús públicos
 - **Listo:** MenuService.GetMenusForUser() — mapea a MenuBlockDto agrupado
 - **Listo:** VPN Dashboard — WireGuard (SSH), Tailscale (REST API), Access Policy, Bandwidth Stats
+- **Listo:** WireGuard peers con `LastSeen` formateado ("active", "Xm ago", "Xh ago", "Xd ago") y ordenados online primero (igual que Tailscale)
+- **Fix:** `LdapAuthService.GetRoles()` — se agregó `"description"` al `SearchRequest`; antes llegaba vacío porque LDAP solo retorna atributos explícitamente solicitados
 - **Listo:** Sistema de alertas — webhooks Grafana y LibreNMS → Telegram (AlertController + AlertService)
 - **Listo:** CRUD canales de notificación Telegram con test directo (NotificationChannelController)
 - **En progreso:** PermissionController — GET /api/permission/Menus activo, faltan endpoints de gestión (asignar/desasignar)

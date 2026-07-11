@@ -6,7 +6,7 @@ namespace SuiteCoreBackend.Controllers
 {
     [ApiController]
     [Route("api/oxidized")]
-    [Authorize]
+    //[Authorize]
     public class OxidizedController : Controller
     {
         private readonly IOxidizedService _oxidizedService;
