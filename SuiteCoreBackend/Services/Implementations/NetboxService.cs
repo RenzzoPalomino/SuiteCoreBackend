@@ -285,21 +285,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/ipam/ip-addresses/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/ip-addresses";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -539,21 +538,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/ipam/vlans/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/vlans";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -1099,21 +1097,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/dcim/sites/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/sites";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -1555,21 +1552,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/dcim/manufacturers/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/manufacturers";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -1809,21 +1805,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/dcim/device-roles/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/device-roles";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -2063,21 +2058,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/dcim/device-types/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/device-types";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -2160,21 +2154,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/dcim/devices/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/devices";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -2414,21 +2407,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/dcim/racks/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/racks";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -2668,21 +2660,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/virtualization/virtual-machines/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/virtual-machines";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -2765,21 +2756,20 @@ public class NetboxService : INetboxService
     {
         try
         {
-            var url = _config["Netbox:Url"];
-            var token = _config["Netbox:Token"];
+            var url = _config["Scno:BaseUrl"];
 
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("La URL de Netbox no está configurada en appsettings.json.");
             }
 
-            var requestUrl = $"{url.TrimEnd('/')}/api/virtualization/clusters/";
+            var requestUrl = $"{url.TrimEnd('/')}/api/v1/netbox/clusters";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            //if (!string.IsNullOrWhiteSpace(token))
+            //{
+            //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //}
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
