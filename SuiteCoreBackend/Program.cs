@@ -83,6 +83,13 @@ builder.Services.Configure<ScnoSettings>(
     builder.Configuration.GetSection("Scno"));
 builder.Services.AddHttpClient<ISdnService, SdnService>();
 builder.Services.AddHttpClient<IGrafanaEmbedService, GrafanaEmbedService>();
+builder.Services.AddHttpClient<IDashboardService, DashboardService>();
+builder.Services.AddHttpClient<IInfrastructureService, InfrastructureService>();
+builder.Services.AddHttpClient<INetworkService, NetworkService>();
+builder.Services.AddHttpClient<ISdnSupervisionService, SdnSupervisionService>();
+builder.Services.AddHttpClient<IIncidentsService, IncidentsService>();
+builder.Services.AddHttpClient<IVpnSupervisionService, VpnSupervisionService>();
+builder.Services.AddHttpClient<IReportsAuditService, ReportsAuditService>();
 
 
 
