@@ -349,5 +349,26 @@ namespace SuiteCoreBackend.Services.Implementations
             _httpClient.GetAsync(
                 $"/api/v1/onboarding/executions/{Uri.EscapeDataString(executionId)}/steps",
                 HttpCompletionOption.ResponseHeadersRead);
+
+        public Task<HttpResponseMessage> TriggerLocalDiscoveryScanRawAsync() =>
+            PostWithScnoHeadersAsync("/api/v1/onboarding/discovery/local/scan");
+
+        public Task<HttpResponseMessage> TriggerTailscaleDiscoveryScanRawAsync() =>
+            PostWithScnoHeadersAsync("/api/v1/onboarding/discovery/tailscale/scan");
+
+        public Task<HttpResponseMessage> CreatePlanForCandidateRawAsync(string candidateId) =>
+            _httpClient.PostAsync($"/api/v1/onboarding/candidates/{Uri.EscapeDataString(candidateId)}/plan", null);
+
+        public Task<HttpResponseMessage> ExecutePlanRawAsync(string planId) =>
+            _httpClient.PostAsync($"/api/v1/onboarding/plans/{Uri.EscapeDataString(planId)}/execute", null);
+
+        private async Task<HttpResponseMessage> PostWithScnoHeadersAsync(string path)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, path);
+            request.Headers.Add("X-SCNO-User", _settings.User);
+            request.Headers.Add("X-SCNO-Role", _settings.Role);
+
+            return await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        }
     }
 }
