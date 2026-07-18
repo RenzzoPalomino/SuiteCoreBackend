@@ -32,11 +32,10 @@ namespace SuiteCoreBackend.Services.Implementations
                 new AuthenticationHeaderValue("Basic", credentials);
         }
 
-        /// <summary>
-        /// Método para obtener la lista de dispositivos desde Oxidized.
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        
+        /// <inheritdoc/>
+        /// <remarks>Llama a GET /nodes.json con Basic Auth. Deserializa con PropertyNameCaseInsensitive
+        /// para tolerar las claves snake_case de Oxidized (full_name, mtime, etc.).</remarks>
         public async Task<List<OxidizedDeviceDto>> GetDevicesAsync()
         {
             var response = await _httpClient.GetAsync("/nodes.json");
@@ -62,18 +61,14 @@ namespace SuiteCoreBackend.Services.Implementations
             return devices ?? new List<OxidizedDeviceDto>();
         }
 
-        /// <summary>
-        /// Método para obtener la configuración de un dispositivo desde Oxidized.
-        /// Si no se envían datos de versión, obtiene la configuración actual.
-        /// Si se envían oid, epoch y num, obtiene una versión específica.
-        /// </summary>
-        /// <param name="deviceName">Nombre del dispositivo registrado en Oxidized.</param>
-        /// <param name="oid">OID/hash de la versión específica.</param>
-        /// <param name="epoch">Epoch de la versión específica.</param>
-        /// <param name="num">Número de versión específica.</param>
-        /// <param name="group">Grupo del dispositivo en Oxidized.</param>
-        /// <returns>DTO con la configuración obtenida.</returns>
-        /// <exception cref="Exception"></exception>
+        
+        /// <inheritdoc/>
+        /// <remarks>
+        /// Construye la URL de Oxidized según la presencia de los tres parámetros de versión:
+        /// todos presentes → /node/version/view (versión histórica); cualquiera ausente → /node/fetch (actual).
+        /// El contenido crudo pasa por OxidizeHelper.NormalizeOxidizedConfig antes de retornarse,
+        /// ya que Oxidized puede responder como JSON array de líneas o como texto plano según el endpoint.
+        /// </remarks>
         public async Task<OxidizedBackupDto> GetDeviceBackupAsync(
             string deviceName,
             string? oid = null,
@@ -139,12 +134,13 @@ namespace SuiteCoreBackend.Services.Implementations
         }
 
 
-        /// <summary>
-        /// Método para mostrar historial/versiones disponibles del backup de un dispositivo.
-        /// </summary>
-        /// <param name="deviceName">Nombre completo del dispositivo registrado en Oxidized.</param>
-        /// <returns>Lista de versiones disponibles del backup del dispositivo.</returns>
-        /// <exception cref="Exception"></exception>
+        
+        /// <inheritdoc/>
+        /// <remarks>
+        /// Llama a /node/version?node_full={deviceName}&format=json. Tras deserializar, calcula
+        /// por cada versión: Epoch (via OxidizeHelper.ConvertToEpoch usando Time ?? Date),
+        /// Num (total - i, donde i=0 es el más reciente) y BackupUrl apuntando al propio backend.
+        /// </remarks>
         public async Task<List<OxidizedVersionDto>> GetDeviceVersionsAsync(string deviceName)
         {
             var encodedDeviceName = Uri.EscapeDataString(deviceName);
