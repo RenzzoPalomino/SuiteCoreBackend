@@ -45,5 +45,31 @@ namespace SuiteCoreBackend.Services.Interfaces
         /// </summary>
         /// <param name="executionId">Id de la ejecución.</param>
         Task<HttpResponseMessage> GetExecutionStepsRawAsync(string executionId);
+
+        /// <summary>
+        /// Dispara un escaneo de descubrimiento de dispositivos MikroTik locales y devuelve la respuesta
+        /// cruda (sin deserializar) tal cual la entrega el SCNO (proxy directo).
+        /// </summary>
+        Task<HttpResponseMessage> TriggerLocalDiscoveryScanRawAsync();
+
+        /// <summary>
+        /// Dispara un escaneo de descubrimiento de dispositivos candidatos en la malla Tailscale y devuelve
+        /// la respuesta cruda (sin deserializar) tal cual la entrega el SCNO (proxy directo).
+        /// </summary>
+        Task<HttpResponseMessage> TriggerTailscaleDiscoveryScanRawAsync();
+
+        /// <summary>
+        /// Genera el plan de onboarding para un candidato y devuelve la respuesta cruda (sin deserializar)
+        /// tal cual la entrega el SCNO (proxy directo).
+        /// </summary>
+        /// <param name="candidateId">Id del candidato.</param>
+        Task<HttpResponseMessage> CreatePlanForCandidateRawAsync(string candidateId);
+
+        /// <summary>
+        /// Ejecuta un plan de onboarding y devuelve la respuesta cruda (sin deserializar) tal cual la
+        /// entrega el SCNO (proxy directo).
+        /// </summary>
+        /// <param name="planId">Id del plan de onboarding.</param>
+        Task<HttpResponseMessage> ExecutePlanRawAsync(string planId);
     }
 }

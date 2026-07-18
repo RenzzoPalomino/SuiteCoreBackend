@@ -153,6 +153,50 @@ namespace SuiteCoreBackend.Controllers
             return await ProxyResponseAsync(response);
         }
 
+        /// <summary>
+        /// Dispara un escaneo de descubrimiento de dispositivos MikroTik locales. Actúa como proxy directo:
+        /// reenvía el código de estado y el cuerpo exactos devueltos por el SCNO, sin deserializar la respuesta.
+        /// </summary>
+        [HttpPost("discovery/local/scan")]
+        public async Task<IActionResult> TriggerLocalDiscoveryScan()
+        {
+            using var response = await _onboarding.TriggerLocalDiscoveryScanRawAsync();
+            return await ProxyResponseAsync(response);
+        }
+
+        /// <summary>
+        /// Dispara un escaneo de descubrimiento de dispositivos candidatos en la malla Tailscale. Actúa como
+        /// proxy directo: reenvía el código de estado y el cuerpo exactos devueltos por el SCNO.
+        /// </summary>
+        [HttpPost("discovery/tailscale/scan")]
+        public async Task<IActionResult> TriggerTailscaleDiscoveryScan()
+        {
+            using var response = await _onboarding.TriggerTailscaleDiscoveryScanRawAsync();
+            return await ProxyResponseAsync(response);
+        }
+
+        /// <summary>
+        /// Genera el plan de onboarding para un candidato. Actúa como proxy directo: reenvía el código de
+        /// estado y el cuerpo exactos devueltos por el SCNO, sin deserializar la respuesta.
+        /// </summary>
+        [HttpPost("candidates/{candidateId}/plan")]
+        public async Task<IActionResult> CreatePlanForCandidate(string candidateId)
+        {
+            using var response = await _onboarding.CreatePlanForCandidateRawAsync(candidateId);
+            return await ProxyResponseAsync(response);
+        }
+
+        /// <summary>
+        /// Ejecuta un plan de onboarding. Actúa como proxy directo: reenvía el código de estado y el
+        /// cuerpo exactos devueltos por el SCNO, sin deserializar la respuesta.
+        /// </summary>
+        [HttpPost("plans/{planId}/execute")]
+        public async Task<IActionResult> ExecutePlan(string planId)
+        {
+            using var response = await _onboarding.ExecutePlanRawAsync(planId);
+            return await ProxyResponseAsync(response);
+        }
+
         private async Task<IActionResult> ProxyResponseAsync(HttpResponseMessage response)
         {
             Response.StatusCode = (int)response.StatusCode;
