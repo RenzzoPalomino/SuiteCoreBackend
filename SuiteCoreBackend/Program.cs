@@ -90,6 +90,7 @@ builder.Services.AddHttpClient<ISdnSupervisionService, SdnSupervisionService>();
 builder.Services.AddHttpClient<IIncidentsService, IncidentsService>();
 builder.Services.AddHttpClient<IVpnSupervisionService, VpnSupervisionService>();
 builder.Services.AddHttpClient<IReportsAuditService, ReportsAuditService>();
+builder.Services.AddHttpClient<IOnboardingService, OnboardingService>();
 
 
 
