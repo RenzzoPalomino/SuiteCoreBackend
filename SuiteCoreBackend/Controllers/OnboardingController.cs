@@ -60,19 +60,15 @@ namespace SuiteCoreBackend.Controllers
             }
         }
 
-        /// <summary>Listado de candidatos de onboarding persistidos en el SCNO.</summary>
+        /// <summary>
+        /// Listado de candidatos de onboarding persistidos en el SCNO. Actúa como proxy directo: reenvía el
+        /// código de estado y el cuerpo exactos devueltos por el SCNO, sin deserializar la respuesta.
+        /// </summary>
         [HttpGet("candidates")]
         public async Task<IActionResult> GetCandidates()
         {
-            try
-            {
-                var result = await _onboarding.GetCandidatesAsync();
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = $"Error al obtener candidatos de onboarding: {ex.Message}" });
-            }
+            using var response = await _onboarding.GetCandidatesRawAsync();
+            return await ProxyResponseAsync(response);
         }
 
         /// <summary>Listado de planes de onboarding generados para candidatos.</summary>
@@ -194,6 +190,17 @@ namespace SuiteCoreBackend.Controllers
         public async Task<IActionResult> ExecutePlan(string planId)
         {
             using var response = await _onboarding.ExecutePlanRawAsync(planId);
+            return await ProxyResponseAsync(response);
+        }
+
+        /// <summary>
+        /// Aprueba un plan de onboarding. Actúa como proxy directo: reenvía el código de estado y el
+        /// cuerpo exactos devueltos por el SCNO, sin deserializar la respuesta.
+        /// </summary>
+        [HttpPost("plans/{planId}/approve")]
+        public async Task<IActionResult> ApprovePlan(string planId)
+        {
+            using var response = await _onboarding.ApprovePlanRawAsync(planId);
             return await ProxyResponseAsync(response);
         }
 

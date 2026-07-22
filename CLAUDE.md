@@ -34,7 +34,7 @@ SuiteCoreBackend/
 ├── Controllers/
 │   ├── AuthController.cs                # Login, Logout, /me, /admin
 │   ├── LdapController.cs                # CRUD usuarios LDAP (GetByGid, Create, Update, Disable, Enable)
-│   ├── MonitoringController.cs          # LibreNMS device types, Grafana panels
+│   ├── MonitoringController.cs          # LibreNMS device types, Grafana panels, Grafana embed links
 │   ├── NetboxController.cs              # CRUD completo Netbox: regions, IPs, vlans, cables,
 │   │                                    # sites, devices, racks, manufacturers, device-roles,
 │   │                                    # module-type-profiles
@@ -42,7 +42,18 @@ SuiteCoreBackend/
 │   ├── PermissionController.cs          # Menús por rol (JWT claim)
 │   ├── AlertController.cs               # Webhooks Grafana y LibreNMS → Telegram
 │   ├── NotificationChannelController.cs # CRUD canales Telegram + test
-│   └── VpnController.cs                 # WireGuard, Tailscale, Access Policy, Stats
+│   ├── VpnController.cs                 # WireGuard, Tailscale, Access Policy, Stats
+│   │  ── Controllers que consumen el SCNO (capa BFF/proxy hacia servicio externo) ──
+│   ├── DashboardController.cs           # Resumen global + charts de módulos/servicios
+│   ├── InfrastructureController.cs      # Proxmox: nodos, VMs, memoria, storage + chart recursos
+│   ├── NetworkController.cs             # LibreNMS: summary, charts y tablas de devices/interfaces/alerts
+│   ├── IncidentsController.cs           # Alertas/incidentes + eventos Graylog (events, security-events)
+│   ├── ReportsAuditController.cs        # Historial de alertas + estado de auditoría de automatización
+│   ├── SdnController.cs                 # SDN OVS/OpenFlow: health, topology, flows, MikroTik,
+│   │                                    # block-ip, automation/execute, webhook Graylog
+│   ├── SdnSupervisionController.cs      # Supervisión SDN: topology, flows, onboarding, decommission
+│   ├── VpnSupervisionController.cs      # Salud VPN agregada + status detallado Tailscale/WireGuard
+│   └── OnboardingController.cs          # Discovery (local/Tailscale) → candidates → plans → execute
 ├── DTOs/
 │   ├── Auth/                       # LoginRequestDto, LoginResponseDto, LdapUserDto,
 │   │                               # UserSessionDto, LdapRoleDto,
@@ -58,10 +69,27 @@ SuiteCoreBackend/
 │   ├── Notification/               # NotificationChannelDto, CreateNotificationChannelDto,
 │   │                               # UpdateNotificationChannelDto, TestNotificationDirectDto
 │   ├── Oxidized/                   # OxidizedDeviceDto, OxidizedBackupDto, OxidizedVersionDto
-│   └── Vpn/                        # VpnGatewayStatusDto, WireGuardStatusDto,
-│                                   # WireGuardPeerDto (+ LastSeen formateado),
-│                                   # WireGuardStatsDto, TailscaleStatusDto, TailscalePeerDto,
-│                                   # VpnAccessPolicyDto, AccessDestinationDto
+│   ├── Vpn/                        # VpnGatewayStatusDto, WireGuardStatusDto,
+│   │                               # WireGuardPeerDto (+ LastSeen formateado),
+│   │                               # WireGuardStatsDto, TailscaleStatusDto, TailscalePeerDto,
+│   │                               # VpnAccessPolicyDto, AccessDestinationDto
+│   │  ── DTOs de la capa SCNO/BFF ──
+│   ├── Dashboard/                  # DashboardSummaryDto, ModulesStatusChartDto, ServicesStatusChartDto
+│   ├── Infrastructure/             # InfrastructureSummaryDto, ResourcesUsageChartDto
+│   ├── Network/                    # NetworkSummaryDto, *StatusChartDto y *TableDto (devices/interfaces/alerts)
+│   ├── Incidents/                  # IncidentsSummaryDto, Incidents{Severity,Modules}ChartDto,
+│   │                               # GraylogEventsResultDto
+│   ├── ReportsAudit/               # AlertsHistoryDto, AutomationAuditStatusDto
+│   ├── Sdn/                        # SdnHealthDto, SdnTopologyDto, SdnStatisticsDto, SdnFlowsDto,
+│   │                               # SdnBlockIpDto, SdnAutomationRequestDto, MikroTikInfoDto,
+│   │                               # MikroTikInterfacesDto
+│   ├── SdnSupervision/             # SdnSupervisionTopologyDto, SdnSupervisionFlowsDto,
+│   │                               # OnboardingStatusDto, DecommissionManifestDto
+│   ├── VpnSupervision/             # VpnHealthDto, TailscaleSupervisionStatusDto,
+│   │                               # WireGuardSupervisionStatusDto, VpnCommonDto
+│   └── Onboarding/                 # OnboardingStatusDto, OnboardingDiscoveryResultDto,
+│                                   # OnboardingCandidatesListDto, OnboardingPlansListDto,
+│                                   # OnboardingExecutionReadinessDto
 ├── Enums/
 │   ├── AccountingStatus.cs         # Start = 1, Stop = 2
 │   ├── DateValues.cs               # UTC_MINUS_FIVE = -5
@@ -82,7 +110,11 @@ SuiteCoreBackend/
 │   │                               # IRadiusSessionService, IGrafanaService,
 │   │                               # ILibreNmsService, INetboxService, IOxidizedService,
 │   │                               # IMenuService, IWireGuardService, ITailscaleService,
-│   │                               # IAlertService, INotificationChannelService
+│   │                               # IAlertService, INotificationChannelService,
+│   │                               # IGrafanaEmbedService, IDashboardService,
+│   │                               # IInfrastructureService, INetworkService, IIncidentsService,
+│   │                               # IReportsAuditService, ISdnService, ISdnSupervisionService,
+│   │                               # IVpnSupervisionService, IOnboardingService
 │   └── Implementations/            # Implementaciones de cada interfaz
 ├── Infrastructure/
 │   ├── Context/SCDbContext.cs      # DbContext — GrafanaPanels, UserActivities,
@@ -98,6 +130,7 @@ SuiteCoreBackend/
 │   ├── OxidizedSettings.cs
 │   ├── WireGuardSettings.cs        # Host, Port, Username, Password, Interface
 │   ├── TailscaleSettings.cs        # ApiKey, Tailnet
+│   ├── ScnoSettings.cs             # BaseUrl, User (X-SCNO-User), Role (X-SCNO-Role)
 │   └── AutoMapperProfile.cs        # Mapeos LdapUser↔LdapUserDto, Netbox*
 └── Program.cs                      # Startup, DI, middleware pipeline
 ```
@@ -127,10 +160,11 @@ SuiteCoreBackend/
 | GET    | `/Menus` | `[Authorize]` | Menús accesibles según gidNumber del JWT  |
 
 ### Monitoring — `/api/monitoring`
-| Método | Ruta             | Auth | Descripción                   |
-|--------|------------------|------|-------------------------------|
-| GET    | `/device-types`  | —    | Tipos de dispositivo LibreNMS |
-| GET    | `/grafana-panels`| —    | Paneles Grafana desde DB      |
+| Método | Ruta                  | Auth | Descripción                        |
+|--------|-----------------------|------|------------------------------------|
+| GET    | `/device-types`       | —    | Tipos de dispositivo LibreNMS      |
+| GET    | `/grafana-panels`     | —    | Paneles Grafana desde DB           |
+| GET    | `/grafana-embed-links`| —    | Links de embebido de paneles Grafana |
 
 ### Netbox — `/api/netbox`
 CRUD completo para cada recurso. Todos los endpoints siguen el patrón `GET /`, `GET /{id}`, `POST /`, `PATCH /{id}`, `DELETE /{id}`.
@@ -182,6 +216,96 @@ Ambos aceptan `?channelId=N` opcional para enviar a un canal específico; sin é
 | GET    | `/wireguard/stats`  | `[Authorize]` | Métricas /proc/net/dev: bytes, paquetes, errores RX/TX + timestamp |
 | GET    | `/tailscale`        | `[Authorize]` | Estado Tailscale, IP mesh, nodo local, lista de peers            |
 | GET    | `/access-policy`    | `[Authorize]` | Política estática: redes alcanzables desde 172.16.40.0/24        |
+
+### Dashboard — `/api/dashboard` *(SCNO)*
+| Método | Ruta                      | Auth | Descripción                                  |
+|--------|---------------------------|------|----------------------------------------------|
+| GET    | `/summary`                | —    | Alertas activas, checks y recursos monitoreados |
+| GET    | `/charts/modules-status`  | —    | Barras: estado de módulos del sistema        |
+| GET    | `/charts/services-status` | —    | Dona: estado de servicios                    |
+
+### Infraestructura — `/api/infrastructure` *(SCNO → Proxmox)*
+| Método | Ruta                | Auth | Descripción                                 |
+|--------|---------------------|------|---------------------------------------------|
+| GET    | `/summary`          | —    | Nodos, VMs, memoria y almacenamiento        |
+| GET    | `/charts/resources` | —    | Dona: uso de CPU, memoria y almacenamiento  |
+
+### Red — `/api/network` *(SCNO → LibreNMS)*
+| Método | Ruta                          | Auth | Descripción                            |
+|--------|-------------------------------|------|----------------------------------------|
+| GET    | `/summary`                    | —    | Dispositivos, interfaces y alertas     |
+| GET    | `/charts/alerts-status`       | —    | Barras: alertas por severidad          |
+| GET    | `/charts/devices-status`      | —    | Dona: estado de dispositivos           |
+| GET    | `/charts/interfaces-status`   | —    | Dona: estado de interfaces             |
+| GET    | `/tables/alerts`              | —    | Tabla de alertas activas               |
+| GET    | `/tables/devices`             | —    | Tabla de dispositivos monitoreados     |
+| GET    | `/tables/interfaces`          | —    | Tabla de interfaces monitoreadas       |
+
+### Incidentes — `/api/incidents` *(SCNO → Graylog)*
+| Método | Ruta                | Auth | Descripción                                  |
+|--------|---------------------|------|----------------------------------------------|
+| GET    | `/summary`          | —    | Resumen: activas, históricas y canales       |
+| GET    | `/charts/severity`  | —    | Dona: alertas por severidad                  |
+| GET    | `/charts/modules`   | —    | Barras: alertas por módulo                   |
+| GET    | `/events`           | —    | Eventos recientes de Graylog                 |
+| GET    | `/security-events`  | —    | Eventos de seguridad de Graylog              |
+
+### Reportes y Auditoría — `/api/reports-audit` *(SCNO)*
+| Método | Ruta            | Auth | Descripción                                        |
+|--------|-----------------|------|----------------------------------------------------|
+| GET    | `/history`      | —    | Historial de alertas del SCNO Alert Manager        |
+| GET    | `/audit-status` | —    | Estado de la BD de auditoría de automatización     |
+
+### SDN — `/api/sdn` *(SCNO → Open vSwitch / OpenFlow / MikroTik)*
+| Método | Ruta                     | Auth | Descripción                                      |
+|--------|--------------------------|------|--------------------------------------------------|
+| GET    | `/health`                | —    | Estado SCNO: bridge OVS, versión OpenFlow        |
+| GET    | `/topology`              | —    | Bridge, controlador OpenFlow, versión OVS, puertos |
+| GET    | `/statistics`            | —    | Estadísticas de puertos del bridge               |
+| GET    | `/flows`                 | —    | Flujos OpenFlow activos                          |
+| GET    | `/mikrotik/info`         | —    | Info del MikroTik administrado                   |
+| GET    | `/mikrotik/interfaces`   | —    | Interfaces del MikroTik                          |
+| POST   | `/security/block-ip`     | —¹   | Instala regla OpenFlow de descarte para una IP   |
+| DELETE | `/security/block-ip`     | —¹   | Elimina el bloqueo de una IP                     |
+| POST   | `/automation/execute`    | —¹   | Ejecuta una acción de automatización SDN         |
+| POST   | `/webhooks/graylog`      | `[AllowAnonymous]` | Recibe eventos Graylog → correlación SDN |
+
+¹ `[Authorize(Roles=...)]` comentado — pendiente activar (5101/5102/5103).
+
+### Supervisión SDN — `/api/sdn-supervision` *(SCNO)*
+| Método | Ruta                      | Auth | Descripción                             |
+|--------|---------------------------|------|-----------------------------------------|
+| GET    | `/topology`               | —    | Topología del bridge SDN                |
+| GET    | `/flows`                  | —    | Flujos OpenFlow activos                 |
+| GET    | `/onboarding/status`      | —    | Estado del onboarding en el SCNO        |
+| GET    | `/decommission/manifest`  | —    | Manifiesto del último proceso de decomisión |
+
+### Supervisión VPN — `/api/vpn-supervision` *(SCNO)*
+| Método | Ruta                 | Auth | Descripción                                  |
+|--------|----------------------|------|----------------------------------------------|
+| GET    | `/health`            | —    | Salud agregada de componentes VPN            |
+| GET    | `/tailscale/status`  | —    | Estado detallado de Tailscale y nodos        |
+| GET    | `/wireguard/status`  | —    | Estado WireGuard, peers y prueba de conectividad |
+
+### Onboarding — `/api/onboarding` *(SCNO)*
+| Método | Ruta                              | Auth | Descripción                                    |
+|--------|-----------------------------------|------|------------------------------------------------|
+| GET    | `/status`                         | —    | Estado general del onboarding                  |
+| GET    | `/discovery/local`                | —    | Descubre MikroTik locales (RouterOS API)       |
+| GET    | `/discovery/tailscale`            | —    | Descubre candidatos en la malla Tailscale      |
+| GET    | `/candidates`                     | —    | Candidatos persistidos                         |
+| GET    | `/plans`                          | —    | Planes de onboarding generados                 |
+| GET    | `/plans/{planId}`                 | —    | Detalle de un plan                             |
+| GET    | `/execution/readiness`            | —    | Disponibilidad de ejecución automatizada       |
+| GET    | `/executions`                     | —    | Ejecuciones (proxy directo²)                   |
+| GET    | `/executions/{executionId}`       | —    | Detalle de ejecución (proxy directo²)          |
+| GET    | `/executions/{executionId}/steps` | —    | Pasos de la ejecución (proxy directo²)         |
+| POST   | `/discovery/local/scan`           | —    | Dispara escaneo local (proxy directo²)         |
+| POST   | `/discovery/tailscale/scan`       | —    | Dispara escaneo Tailscale (proxy directo²)     |
+| POST   | `/candidates/{candidateId}/plan`  | —    | Genera plan para candidato (proxy directo²)    |
+| POST   | `/plans/{planId}/execute`         | —    | Ejecuta un plan (proxy directo²)               |
+
+² Proxy directo: reenvía status code y body exactos del SCNO sin deserializar ni transformar.
 
 ## Flujo de Autenticación
 
@@ -238,8 +362,18 @@ POST /api/auth/logout
 | IMenuService                | MenuService                | Scoped         | Obtiene menús accesibles por gidNumbers del usuario     |
 | IWireGuardService           | WireGuardService           | Scoped         | Estado WireGuard y métricas via SSH (SSH.NET)           |
 | ITailscaleService           | TailscaleService           | AddHttpClient  | Peers Tailscale via REST API + política de acceso VPN   |
-| IAlertService               | AlertService               | Scoped         | Procesa webhooks de Grafana/LibreNMS → Telegram         |
-| INotificationChannelService | NotificationChannelService | Scoped         | CRUD canales Telegram + envío de mensajes de prueba     |
+| IAlertService               | AlertService               | AddHttpClient  | Procesa webhooks de Grafana/LibreNMS → Telegram         |
+| INotificationChannelService | NotificationChannelService | AddHttpClient  | CRUD canales Telegram + envío de mensajes de prueba     |
+| IGrafanaEmbedService        | GrafanaEmbedService        | AddHttpClient  | Genera links de embebido de paneles Grafana             |
+| IDashboardService           | DashboardService           | AddHttpClient  | Resumen global + charts (consume SCNO)                  |
+| IInfrastructureService      | InfrastructureService      | AddHttpClient  | Estado Proxmox: nodos, VMs, recursos (consume SCNO)     |
+| INetworkService             | NetworkService             | AddHttpClient  | Summary/charts/tablas de red LibreNMS (consume SCNO)    |
+| IIncidentsService           | IncidentsService           | AddHttpClient  | Alertas + eventos Graylog (consume SCNO)                |
+| IReportsAuditService        | ReportsAuditService        | AddHttpClient  | Historial de alertas + auditoría (consume SCNO)         |
+| ISdnService                 | SdnService                 | AddHttpClient  | SDN OVS/OpenFlow/MikroTik, block-ip, automation (SCNO)  |
+| ISdnSupervisionService      | SdnSupervisionService      | AddHttpClient  | Supervisión SDN: topology, flows, decommission (SCNO)   |
+| IVpnSupervisionService      | VpnSupervisionService      | AddHttpClient  | Salud VPN + status Tailscale/WireGuard (consume SCNO)   |
+| IOnboardingService          | OnboardingService          | AddHttpClient  | Discovery → candidates → plans → execute (consume SCNO) |
 
 ### Métodos clave de ILdapAuthService
 ```csharp
@@ -338,6 +472,9 @@ Task RemoveMenuFromRole(string gidNumber, int menuId)
 | PostgreSQL | 172.16.20.15                                | User/Pass        | `ConnectionStrings:`      |
 | WireGuard  | 172.16.20.12 (SSH :22)                      | SSH user/pass    | `WireGuard:`              |
 | Tailscale  | api.tailscale.com/api/v2/tailnet/{tailnet}  | Bearer ApiKey    | `Tailscale:`              |
+| SCNO       | `Scno:BaseUrl`                              | Headers X-SCNO-User / X-SCNO-Role | `Scno:`      |
+
+> **SCNO** (SuiteCore Network Orchestrator) es el servicio externo que orquesta SDN (OVS/OpenFlow/MikroTik), onboarding automático, correlación de eventos Graylog y auditoría de automatización. El backend actúa como **capa BFF/proxy**: los controllers Dashboard, Infrastructure, Network, Incidents, ReportsAudit, Sdn, SdnSupervision, VpnSupervision y Onboarding consumen el SCNO vía `AddHttpClient`. Varios endpoints de Onboarding son **proxy directo** (reenvían status+body sin transformar). Graylog y Proxmox se acceden indirectamente a través del SCNO, no por integración directa del backend.
 
 ## Settings (IOptions<T>)
 
@@ -349,6 +486,7 @@ Task RemoveMenuFromRole(string gidNumber, int menuId)
 | OxidizedSettings   | `Oxidized:`         |                                               |
 | WireGuardSettings  | `WireGuard:`        | Host (172.16.20.12), Port (22), Username, Password, Interface (wg0) |
 | TailscaleSettings  | `Tailscale:`        | ApiKey (tskey-api-...), Tailnet (email o dominio) |
+| ScnoSettings       | `Scno:`             | BaseUrl, User (header X-SCNO-User), Role (header X-SCNO-Role) |
 
 ## Gestión de Usuarios LDAP
 
@@ -470,9 +608,14 @@ NetboxStatusResult ↔ NetboxStatusDto
 - **Fix:** `LdapAuthService.GetRoles()` — se agregó `"description"` al `SearchRequest`; antes llegaba vacío porque LDAP solo retorna atributos explícitamente solicitados
 - **Listo:** Sistema de alertas — webhooks Grafana y LibreNMS → Telegram (AlertController + AlertService)
 - **Listo:** CRUD canales de notificación Telegram con test directo (NotificationChannelController)
+- **Listo:** Capa BFF/proxy hacia el SCNO — Dashboard, Infrastructure (Proxmox), Network (LibreNMS), Incidents (Graylog), ReportsAudit, Sdn (OVS/OpenFlow/MikroTik), SdnSupervision, VpnSupervision y Onboarding
+- **Listo:** Módulo SDN — health, topology, statistics, flows, info/interfaces MikroTik, block-ip (OpenFlow), automation/execute, webhook Graylog
+- **Listo:** Onboarding automático de dispositivos — discovery local (RouterOS) y Tailscale, generación de planes y ejecución con seguimiento de pasos
+- **Listo:** Auditoría de logs y eventos — eventos y security-events desde Graylog (Incidents) + historial de alertas y estado de auditoría (ReportsAudit)
+- **Listo:** MonitoringController — `grafana-embed-links` para embebido de paneles Grafana
 - **En progreso:** PermissionController — GET /api/permission/Menus activo, faltan endpoints de gestión (asignar/desasignar)
 - **Suspendido:** RADIUS Accounting-Start en login — RADIUS es para equipos de red, no sesiones web
-- **Pendiente:** Restaurar `[Authorize]` en `MonitoringController`, `NetboxController`, `AlertController`, `NotificationChannelController` y `VpnController` (sin auth actualmente)
+- **Pendiente (seguridad):** casi todos los controllers tienen `[Authorize]` comentado (`//[Authorize]`). Restaurar auth en Monitoring, Netbox, Alert, NotificationChannel, Vpn y en todos los controllers del SCNO (Dashboard, Infrastructure, Network, Incidents, ReportsAudit, Sdn, SdnSupervision, VpnSupervision, Onboarding). En SdnController los `[Authorize(Roles=...)]` de block-ip/automation también están comentados
 - **Pendiente:** Endpoints admin de gestión de roles-menús (AssignMenuToRole, RemoveMenuFromRole)
 
 ## Puertos Locales

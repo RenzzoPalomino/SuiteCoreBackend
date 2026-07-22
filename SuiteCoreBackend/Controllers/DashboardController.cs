@@ -59,5 +59,25 @@ namespace SuiteCoreBackend.Controllers
                 return StatusCode(500, new { message = $"Error al obtener el estado de servicios: {ex.Message}" });
             }
         }
+
+        /// <summary>
+        /// Gráfico de alertas del dashboard principal. Actúa como proxy directo: reenvía el código de
+        /// estado y el cuerpo exactos devueltos por el SCNO, sin deserializar la respuesta.
+        /// </summary>
+        [HttpGet("charts/alerts-status")]
+        public async Task<IActionResult> GetAlertsStatusChart()
+        {
+            using var response = await _dashboard.GetAlertsStatusChartRawAsync();
+            return await ProxyResponseAsync(response);
+        }
+
+        private async Task<IActionResult> ProxyResponseAsync(HttpResponseMessage response)
+        {
+            Response.StatusCode = (int)response.StatusCode;
+            Response.ContentType = response.Content.Headers.ContentType?.ToString() ?? "application/json";
+
+            await response.Content.CopyToAsync(Response.Body);
+            return new EmptyResult();
+        }
     }
 }

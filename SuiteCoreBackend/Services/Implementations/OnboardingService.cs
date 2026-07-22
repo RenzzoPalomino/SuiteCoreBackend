@@ -133,56 +133,10 @@ namespace SuiteCoreBackend.Services.Implementations
             };
         }
 
-        public async Task<OnboardingCandidatesListDto> GetCandidatesAsync()
-        {
-            var json = await _httpClient.GetStringAsync("/api/v1/onboarding/candidates");
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            var items = new List<OnboardingCandidateDto>();
-            if (root.TryGetProperty("items", out var itemsEl))
-            {
-                foreach (var item in itemsEl.EnumerateArray())
-                {
-                    var metadata = item.TryGetProperty("metadata", out var metaEl)
-                        ? JsonSerializer.Deserialize<Dictionary<string, object?>>(metaEl.GetRawText()) ?? new()
-                        : new Dictionary<string, object?>();
-
-                    items.Add(new OnboardingCandidateDto
-                    {
-                        CandidateId     = item.GetStringOrEmpty("candidate_id"),
-                        Source          = item.GetStringOrEmpty("source"),
-                        SourceKey       = item.GetStringOrEmpty("source_key"),
-                        Name            = item.GetStringOrEmpty("name"),
-                        Hostname        = item.GetStringOrEmpty("hostname"),
-                        ManagementIp    = item.GetStringOrEmpty("management_ip"),
-                        OperatingSystem = item.GetStringOrEmpty("operating_system"),
-                        State           = item.GetStringOrEmpty("state"),
-                        Eligibility     = item.GetStringOrEmpty("eligibility"),
-                        Reason          = item.GetStringOrEmpty("reason"),
-                        FirstSeenAt     = item.GetStringOrEmpty("first_seen_at"),
-                        LastSeenAt      = item.GetStringOrEmpty("last_seen_at"),
-                        LastOnlineAt    = item.GetStringOrEmpty("last_online_at"),
-                        DiscoveryCount  = item.TryGetProperty("discovery_count", out var dc) ? dc.GetInt32() : 0,
-                        DiscoveredBy    = item.GetStringOrEmpty("discovered_by"),
-                        DiscoveredRole  = item.GetStringOrEmpty("discovered_role"),
-                        LastScanId      = item.GetStringOrEmpty("last_scan_id"),
-                        CreatedAt       = item.GetStringOrEmpty("created_at"),
-                        UpdatedAt       = item.GetStringOrEmpty("updated_at"),
-                        Metadata        = metadata
-                    });
-                }
-            }
-
-            return new OnboardingCandidatesListDto
-            {
-                Status = root.GetStringOrEmpty("status"),
-                Count  = root.TryGetProperty("count", out var cnt) ? cnt.GetInt32() : 0,
-                Total  = root.TryGetProperty("total", out var tot) ? tot.GetInt32() : 0,
-                State  = root.TryGetProperty("state", out var st) && st.ValueKind == JsonValueKind.String ? st.GetString() : null,
-                Items  = items
-            };
-        }
+        public Task<HttpResponseMessage> GetCandidatesRawAsync() =>
+            _httpClient.GetAsync(
+                "/api/v1/onboarding/candidates",
+                HttpCompletionOption.ResponseHeadersRead);
 
         public async Task<OnboardingPlansListDto> GetPlansAsync()
         {
@@ -360,13 +314,22 @@ namespace SuiteCoreBackend.Services.Implementations
             _httpClient.PostAsync($"/api/v1/onboarding/candidates/{Uri.EscapeDataString(candidateId)}/plan", null);
 
         public Task<HttpResponseMessage> ExecutePlanRawAsync(string planId) =>
-            _httpClient.PostAsync($"/api/v1/onboarding/plans/{Uri.EscapeDataString(planId)}/execute", null);
+            PostWithScnoHeadersAsync($"/api/v1/onboarding/plans/{Uri.EscapeDataString(planId)}/execute");
 
-        private async Task<HttpResponseMessage> PostWithScnoHeadersAsync(string path)
+        public Task<HttpResponseMessage> ApprovePlanRawAsync(string planId) =>
+            PostWithScnoHeadersAsync(
+                $"/api/v1/onboarding/plans/{Uri.EscapeDataString(planId)}/approve",
+                _settings.ApproverUser,
+                _settings.Role);
+
+        private Task<HttpResponseMessage> PostWithScnoHeadersAsync(string path) =>
+            PostWithScnoHeadersAsync(path, _settings.User, _settings.Role);
+
+        private async Task<HttpResponseMessage> PostWithScnoHeadersAsync(string path, string user, string role)
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, path);
-            request.Headers.Add("X-SCNO-User", _settings.User);
-            request.Headers.Add("X-SCNO-Role", _settings.Role);
+            request.Headers.Add("X-SCNO-User", user);
+            request.Headers.Add("X-SCNO-Role", role);
 
             return await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
         }
