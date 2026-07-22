@@ -91,5 +91,10 @@ namespace SuiteCoreBackend.Services.Implementations
                 Datos = datos
             };
         }
+
+        public Task<HttpResponseMessage> GetAlertsStatusChartRawAsync() =>
+            _httpClient.GetAsync(
+                "/api/v1/dashboard/charts/alerts-status",
+                HttpCompletionOption.ResponseHeadersRead);
     }
 }

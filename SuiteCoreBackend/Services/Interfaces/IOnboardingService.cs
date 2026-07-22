@@ -13,8 +13,11 @@ namespace SuiteCoreBackend.Services.Interfaces
         /// <summary>Ejecuta un escaneo de descubrimiento de dispositivos candidatos en la malla Tailscale.</summary>
         Task<OnboardingDiscoveryResultDto> GetTailscaleDiscoveryAsync();
 
-        /// <summary>Obtiene el listado de candidatos de onboarding persistidos en el SCNO.</summary>
-        Task<OnboardingCandidatesListDto> GetCandidatesAsync();
+        /// <summary>
+        /// Obtiene la respuesta cruda (sin deserializar) del listado de candidatos de onboarding persistidos
+        /// en el SCNO, para reenviarla tal cual al cliente (proxy directo).
+        /// </summary>
+        Task<HttpResponseMessage> GetCandidatesRawAsync();
 
         /// <summary>Obtiene el listado de planes de onboarding generados para candidatos.</summary>
         Task<OnboardingPlansListDto> GetPlansAsync();
@@ -71,5 +74,12 @@ namespace SuiteCoreBackend.Services.Interfaces
         /// </summary>
         /// <param name="planId">Id del plan de onboarding.</param>
         Task<HttpResponseMessage> ExecutePlanRawAsync(string planId);
+
+        /// <summary>
+        /// Aprueba un plan de onboarding y devuelve la respuesta cruda (sin deserializar) tal cual la
+        /// entrega el SCNO (proxy directo).
+        /// </summary>
+        /// <param name="planId">Id del plan de onboarding.</param>
+        Task<HttpResponseMessage> ApprovePlanRawAsync(string planId);
     }
 }
