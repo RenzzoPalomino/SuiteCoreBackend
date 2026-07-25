@@ -1,5 +1,7 @@
 # SuiteCoreBackend — Contexto del Proyecto
 
+> **SuiteCore** es una plataforma centralizada de gestión de infraestructura de red. Integra monitoreo, inventario, VPN, SDN (Open vSwitch / OpenFlow / MikroTik), automatización y gestión de identidades — no es un dashboard, es una plataforma completa.
+
 ## Stack Tecnológico
 
 - **.NET 8.0** — ASP.NET Core Web API
@@ -603,7 +605,7 @@ NetboxStatusResult ↔ NetboxStatusDto
 - **Listo:** Entidades EF Core para sistema de menús (MenuBlock, Menu, RoleMenu — schema `session`)
 - **Listo:** MenuRepository con filtro por gidNumbers + menús públicos
 - **Listo:** MenuService.GetMenusForUser() — mapea a MenuBlockDto agrupado
-- **Listo:** VPN Dashboard — WireGuard (SSH), Tailscale (REST API), Access Policy, Bandwidth Stats
+- **Listo:** Módulo VPN — WireGuard (SSH), Tailscale (REST API), Access Policy, Bandwidth Stats
 - **Listo:** WireGuard peers con `LastSeen` formateado ("active", "Xm ago", "Xh ago", "Xd ago") y ordenados online primero (igual que Tailscale)
 - **Fix:** `LdapAuthService.GetRoles()` — se agregó `"description"` al `SearchRequest`; antes llegaba vacío porque LDAP solo retorna atributos explícitamente solicitados
 - **Listo:** Sistema de alertas — webhooks Grafana y LibreNMS → Telegram (AlertController + AlertService)

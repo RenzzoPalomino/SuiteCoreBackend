@@ -117,42 +117,10 @@ namespace SuiteCoreBackend.Services.Implementations
             };
         }
 
-        public async Task<NetworkDevicesTableDto> GetDevicesTableAsync()
-        {
-            var json = await _httpClient.GetStringAsync("/api/v1/network/tables/devices");
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            var devices = new List<NetworkDeviceDto>();
-            if (root.TryGetProperty("datos", out var datosEl))
-            {
-                foreach (var dev in datosEl.EnumerateArray())
-                {
-                    devices.Add(new NetworkDeviceDto
-                    {
-                        DeviceId    = dev.TryGetProperty("device_id", out var did) ? did.GetInt32() : 0,
-                        Hostname    = dev.GetStringOrEmpty("hostname"),
-                        Display     = dev.GetStringOrEmpty("display"),
-                        SysName     = dev.GetStringOrEmpty("sysName"),
-                        Ip          = dev.GetStringOrEmpty("ip"),
-                        Os          = dev.GetStringOrEmpty("os"),
-                        Type        = dev.GetStringOrEmpty("type"),
-                        Status      = dev.TryGetProperty("status", out var st) ? st.GetInt32() : 0,
-                        StatusLabel = dev.GetStringOrEmpty("status_label"),
-                        Uptime      = dev.TryGetProperty("uptime", out var up) ? up.GetInt64() : 0,
-                        LastPolled  = dev.GetStringOrEmpty("last_polled"),
-                        LastPing    = dev.GetStringOrEmpty("last_ping"),
-                        Location    = dev.GetStringOrEmpty("location")
-                    });
-                }
-            }
-
-            return new NetworkDevicesTableDto
-            {
-                Titulo = root.GetStringOrEmpty("titulo"),
-                Datos = devices
-            };
-        }
+        public Task<HttpResponseMessage> GetDevicesTableRawAsync() =>
+            _httpClient.GetAsync(
+                "/api/v1/network/tables/devices",
+                HttpCompletionOption.ResponseHeadersRead);
 
         public async Task<NetworkInterfacesTableDto> GetInterfacesTableAsync()
         {
