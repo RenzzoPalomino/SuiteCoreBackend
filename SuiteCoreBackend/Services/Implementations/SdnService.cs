@@ -1,7 +1,10 @@
 using Microsoft.Extensions.Options;
+using Org.BouncyCastle.Asn1.Ocsp;
 using SuiteCoreBackend.DTOs.Sdn;
+using SuiteCoreBackend.Models.Entities;
 using SuiteCoreBackend.Services.Interfaces;
 using SuiteCoreBackend.Settings;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -149,19 +152,44 @@ namespace SuiteCoreBackend.Services.Implementations
 
         public async Task<object> BlockIpAsync(SdnBlockIpDto request)
         {
-            var response = await _httpClient.PostAsJsonAsync("/api/v1/security/block-ip", new { ip = request.Ip });
+            using var httpRequest = new HttpRequestMessage(
+                HttpMethod.Post,
+                "/api/v1/security/block-ip")
+            {
+                Content = JsonContent.Create(new
+                {
+                    ip = request.Ip
+                })
+            };
+
+            addHeaders(httpRequest);
+
+            var response = await _httpClient.SendAsync(httpRequest);
+
             response.EnsureSuccessStatusCode();
+
             return await response.Content.ReadFromJsonAsync<object>() ?? new { };
         }
 
+
         public async Task<object> UnblockIpAsync(SdnBlockIpDto request)
         {
-            var httpRequest = new HttpRequestMessage(HttpMethod.Delete, "/api/v1/security/block-ip")
+            using var httpRequest = new HttpRequestMessage(
+                HttpMethod.Delete,
+                "/api/v1/security/block-ip")
             {
-                Content = JsonContent.Create(new { ip = request.Ip })
+                Content = JsonContent.Create(new
+                {
+                    ip = request.Ip
+                })
             };
+
+            addHeaders(httpRequest);
+
             var response = await _httpClient.SendAsync(httpRequest);
+
             response.EnsureSuccessStatusCode();
+
             return await response.Content.ReadFromJsonAsync<object>() ?? new { };
         }
 
@@ -177,6 +205,12 @@ namespace SuiteCoreBackend.Services.Implementations
             var response = await _httpClient.PostAsJsonAsync("/api/v1/webhooks/graylog", payload);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<object>() ?? new { };
+        }
+
+        void addHeaders(HttpRequestMessage rq)
+        {
+            rq.Headers.Add("X-SCNO-User", _settings.User);
+            rq.Headers.Add("X-SCNO-Role", _settings.Role);
         }
     }
 
