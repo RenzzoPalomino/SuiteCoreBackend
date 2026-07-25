@@ -19,8 +19,11 @@ namespace SuiteCoreBackend.Services.Interfaces
         /// <summary>Obtiene la tabla de alertas de red activas.</summary>
         Task<NetworkAlertsTableDto> GetAlertsTableAsync();
 
-        /// <summary>Obtiene la tabla de dispositivos de red monitoreados.</summary>
-        Task<NetworkDevicesTableDto> GetDevicesTableAsync();
+        /// <summary>
+        /// Obtiene la respuesta cruda (sin deserializar) de la tabla de dispositivos de red monitoreados,
+        /// para reenviarla tal cual al cliente (proxy directo).
+        /// </summary>
+        Task<HttpResponseMessage> GetDevicesTableRawAsync();
 
         /// <summary>Obtiene la tabla de interfaces de red monitoreadas.</summary>
         Task<NetworkInterfacesTableDto> GetInterfacesTableAsync();

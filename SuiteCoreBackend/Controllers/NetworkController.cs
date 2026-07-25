@@ -91,19 +91,15 @@ namespace SuiteCoreBackend.Controllers
             }
         }
 
-        /// <summary>Tabla de dispositivos de red monitoreados.</summary>
+        /// <summary>
+        /// Tabla de dispositivos de red monitoreados. Actúa como proxy directo: reenvía el código de
+        /// estado y el cuerpo exactos devueltos por el SCNO, sin deserializar la respuesta.
+        /// </summary>
         [HttpGet("tables/devices")]
         public async Task<IActionResult> GetDevicesTable()
         {
-            try
-            {
-                var result = await _network.GetDevicesTableAsync();
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = $"Error al obtener la tabla de dispositivos: {ex.Message}" });
-            }
+            using var response = await _network.GetDevicesTableRawAsync();
+            return await ProxyResponseAsync(response);
         }
 
         /// <summary>Tabla de interfaces de red monitoreadas.</summary>
@@ -119,6 +115,15 @@ namespace SuiteCoreBackend.Controllers
             {
                 return StatusCode(500, new { message = $"Error al obtener la tabla de interfaces: {ex.Message}" });
             }
+        }
+
+        private async Task<IActionResult> ProxyResponseAsync(HttpResponseMessage response)
+        {
+            Response.StatusCode = (int)response.StatusCode;
+            Response.ContentType = response.Content.Headers.ContentType?.ToString() ?? "application/json";
+
+            await response.Content.CopyToAsync(Response.Body);
+            return new EmptyResult();
         }
     }
 }
