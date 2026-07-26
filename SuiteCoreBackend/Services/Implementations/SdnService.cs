@@ -154,15 +154,17 @@ namespace SuiteCoreBackend.Services.Implementations
         {
             using var httpRequest = new HttpRequestMessage(
                 HttpMethod.Post,
-                "/api/v1/security/block-ip")
+                "/api/v1/automation/ip-action")
             {
                 Content = JsonContent.Create(new
                 {
+                    action="block",
                     ip = request.Ip
                 })
             };
 
-            addHeaders(httpRequest);
+            string correlationId = Guid.NewGuid().ToString();
+            addHeaders(httpRequest,correlationId);
 
             var response = await _httpClient.SendAsync(httpRequest);
 
@@ -175,16 +177,17 @@ namespace SuiteCoreBackend.Services.Implementations
         public async Task<object> UnblockIpAsync(SdnBlockIpDto request)
         {
             using var httpRequest = new HttpRequestMessage(
-                HttpMethod.Delete,
-                "/api/v1/security/block-ip")
+                HttpMethod.Post,
+                "api/v1/automation/ip-action")
             {
                 Content = JsonContent.Create(new
                 {
+                    action = "unblock",
                     ip = request.Ip
                 })
             };
-
-            addHeaders(httpRequest);
+            string correlationId = Guid.NewGuid().ToString();
+            addHeaders(httpRequest, correlationId);
 
             var response = await _httpClient.SendAsync(httpRequest);
 
@@ -207,10 +210,11 @@ namespace SuiteCoreBackend.Services.Implementations
             return await response.Content.ReadFromJsonAsync<object>() ?? new { };
         }
 
-        void addHeaders(HttpRequestMessage rq)
+        void addHeaders(HttpRequestMessage rq, string correlationId)
         {
             rq.Headers.Add("X-SCNO-User", _settings.User);
             rq.Headers.Add("X-SCNO-Role", _settings.Role);
+            rq.Headers.Add("X-Correlation-ID", correlationId);
         }
     }
 
