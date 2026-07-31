@@ -37,9 +37,9 @@ SuiteCoreBackend/
 │   ├── AuthController.cs                # Login, Logout, /me, /admin
 │   ├── LdapController.cs                # CRUD usuarios LDAP (GetByGid, Create, Update, Disable, Enable)
 │   ├── MonitoringController.cs          # LibreNMS device types, Grafana panels, Grafana embed links
-│   ├── NetboxController.cs              # CRUD completo Netbox: regions, IPs, vlans, cables,
+│   ├── NetboxController.cs              # Muestreo (solo lectura) Netbox vía SCNO: IPs, vlans,
 │   │                                    # sites, devices, racks, manufacturers, device-roles,
-│   │                                    # module-type-profiles
+│   │                                    # device-types, virtual-machines, clusters
 │   ├── OxidizedController.cs            # Dispositivos, versiones y backups Oxidized
 │   ├── PermissionController.cs          # Menús por rol (JWT claim)
 │   ├── AlertController.cs               # Webhooks Grafana y LibreNMS → Telegram
@@ -55,7 +55,8 @@ SuiteCoreBackend/
 │   │                                    # block-ip, automation/execute, webhook Graylog
 │   ├── SdnSupervisionController.cs      # Supervisión SDN: topology, flows, onboarding, decommission
 │   ├── VpnSupervisionController.cs      # Salud VPN agregada + status detallado Tailscale/WireGuard
-│   └── OnboardingController.cs          # Discovery (local/Tailscale) → candidates → plans → execute
+│   ├── OnboardingController.cs          # Discovery (local/Tailscale) → candidates → plans → approve → execute
+│   └── ScnoController.cs                # Ciclo de vida SCNO: lifecycle/onboard y lifecycle/decommission (proxy directo)
 ├── DTOs/
 │   ├── Auth/                       # LoginRequestDto, LoginResponseDto, LdapUserDto,
 │   │                               # UserSessionDto, LdapRoleDto,
@@ -63,11 +64,12 @@ SuiteCoreBackend/
 │   ├── Alert/                      # GrafanaWebhookDto, LibreNmsWebhookDto
 │   ├── Menu/                       # MenuBlockDto, MenuItemDto, AssignMenusRequestDto
 │   ├── Monitoring/                 # DeviceTypeDto, GrafanaPanelDto
-│   ├── Netbox/                     # NetboxRegionDto, NetboxIpAddressDto, NetboxVlanDto,
-│   │                               # NetboxCableDto, NetboxSiteDto, NetboxDeviceDto,
-│   │                               # NetboxRackDto, NetboxManufacturerDto,
-│   │                               # NetboxDeviceRoleDto, NetboxModuleTypeProfileDto
-│   │                               # + Create*/Update* variants para cada recurso
+│   ├── Netbox/                     # (Muestreo) NetboxIpAddressDto, NetboxVlanDto, NetboxSiteDto,
+│   │                               # NetboxDeviceDto, NetboxDeviceTypeDto, NetboxRackDto,
+│   │                               # NetboxManufacturerDto, NetboxDeviceRoleDto,
+│   │                               # NetboxVirtualMachineDto, NetboxClusterDto (+ *Nested/*Result)
+│   │                               # DTOs Region/Cable/ModuleTypeProfile + Create*/Update* quedan
+│   │                               # como legado; el controller ya no expone CRUD
 │   ├── Notification/               # NotificationChannelDto, CreateNotificationChannelDto,
 │   │                               # UpdateNotificationChannelDto, TestNotificationDirectDto
 │   ├── Oxidized/                   # OxidizedDeviceDto, OxidizedBackupDto, OxidizedVersionDto
@@ -89,9 +91,9 @@ SuiteCoreBackend/
 │   │                               # OnboardingStatusDto, DecommissionManifestDto
 │   ├── VpnSupervision/             # VpnHealthDto, TailscaleSupervisionStatusDto,
 │   │                               # WireGuardSupervisionStatusDto, VpnCommonDto
-│   └── Onboarding/                 # OnboardingStatusDto, OnboardingDiscoveryResultDto,
-│                                   # OnboardingCandidatesListDto, OnboardingPlansListDto,
-│                                   # OnboardingExecutionReadinessDto
+│   ├── Onboarding/                 # OnboardingStatusDto, OnboardingDiscoveryResultDto,
+│   │                               # OnboardingPlansListDto, OnboardingExecutionReadinessDto
+│   └── Scno/                       # DecommissionLifecycleRequestDto, OnboardLifecycleRequestDto
 ├── Enums/
 │   ├── AccountingStatus.cs         # Start = 1, Stop = 2
 │   ├── DateValues.cs               # UTC_MINUS_FIVE = -5
@@ -168,21 +170,21 @@ SuiteCoreBackend/
 | GET    | `/grafana-panels`     | —    | Paneles Grafana desde DB           |
 | GET    | `/grafana-embed-links`| —    | Links de embebido de paneles Grafana |
 
-### Netbox — `/api/netbox`
-CRUD completo para cada recurso. Todos los endpoints siguen el patrón `GET /`, `GET /{id}`, `POST /`, `PATCH /{id}`, `DELETE /{id}`.
+### Netbox — `/api/netbox` *(muestreo — solo lectura, vía SCNO)*
+Solo lectura. Todos los recursos siguen el patrón `GET /{recurso}`. El backend **ya no consulta la API de Netbox directamente**: consume el SCNO en `{Scno:BaseUrl}/api/v1/netbox/{recurso}`, que actúa como fuente proxy del inventario. El `CRUD` y los endpoints `POST/PATCH/DELETE` fueron retirados.
 
 | Recurso             | Ruta base                    | Auth |
 |---------------------|------------------------------|------|
-| Regiones            | `/regions`                   | —    |
 | IPs                 | `/ip-addresses`              | —    |
 | VLANs               | `/vlans`                     | —    |
-| Cables              | `/cables`                    | —    |
 | Sitios              | `/sites`                     | —    |
 | Dispositivos        | `/devices`                   | —    |
+| Tipos de dispositivo| `/device-types`              | —    |
 | Racks               | `/racks`                     | —    |
 | Fabricantes         | `/manufacturers`             | —    |
 | Roles de dispositivo| `/device-roles`              | —    |
-| Module Type Profiles| `/module-type-profiles`      | —    |
+| Máquinas virtuales  | `/virtual-machines`          | —    |
+| Clusters            | `/clusters`                  | —    |
 
 ### Alertas — `/api/alerts`
 | Método | Ruta        | Auth | Descripción                                          |
@@ -305,9 +307,18 @@ Ambos aceptan `?channelId=N` opcional para enviar a un canal específico; sin é
 | POST   | `/discovery/local/scan`           | —    | Dispara escaneo local (proxy directo²)         |
 | POST   | `/discovery/tailscale/scan`       | —    | Dispara escaneo Tailscale (proxy directo²)     |
 | POST   | `/candidates/{candidateId}/plan`  | —    | Genera plan para candidato (proxy directo²)    |
+| POST   | `/plans/{planId}/approve`         | —    | Aprueba un plan (proxy directo²)               |
 | POST   | `/plans/{planId}/execute`         | —    | Ejecuta un plan (proxy directo²)               |
 
 ² Proxy directo: reenvía status code y body exactos del SCNO sin deserializar ni transformar.
+
+### SCNO Ciclo de Vida — `/api/scno` *(SCNO)*
+| Método | Ruta                       | Auth | Descripción                                          |
+|--------|----------------------------|------|------------------------------------------------------|
+| POST   | `/lifecycle/onboard`       | —    | Dispara onboarding del ciclo de vida (proxy directo²)|
+| POST   | `/lifecycle/decommission`  | —    | Dispara decomisión del ciclo de vida (proxy directo²)|
+
+`lifecycle/onboard` recibe `{ candidateId }`; `lifecycle/decommission` recibe `{ planId, candidateId, reason }`.
 
 ## Flujo de Autenticación
 
@@ -359,7 +370,7 @@ POST /api/auth/logout
 | IRadiusSessionService | RadiusSessionService | Scoped         | Accounting Start/Stop RADIUS                            |
 | IGrafanaService       | GrafanaService       | Scoped         | Construye URLs de paneles Grafana desde DB              |
 | ILibreNmsService      | LibreNmsService      | AddHttpClient  | Consulta tipos de dispositivo LibreNMS                  |
-| INetboxService        | NetboxService        | AddHttpClient  | CRUD regiones e IPs en Netbox                           |
+| INetboxService        | NetboxService        | AddHttpClient  | Muestreo (solo lectura) de inventario Netbox vía SCNO   |
 | IOxidizedService      | OxidizedService      | AddHttpClient  | Dispositivos, versiones y backups de Oxidized           |
 | IMenuService                | MenuService                | Scoped         | Obtiene menús accesibles por gidNumbers del usuario     |
 | IWireGuardService           | WireGuardService           | Scoped         | Estado WireGuard y métricas via SSH (SSH.NET)           |
@@ -375,7 +386,8 @@ POST /api/auth/logout
 | ISdnService                 | SdnService                 | AddHttpClient  | SDN OVS/OpenFlow/MikroTik, block-ip, automation (SCNO)  |
 | ISdnSupervisionService      | SdnSupervisionService      | AddHttpClient  | Supervisión SDN: topology, flows, decommission (SCNO)   |
 | IVpnSupervisionService      | VpnSupervisionService      | AddHttpClient  | Salud VPN + status Tailscale/WireGuard (consume SCNO)   |
-| IOnboardingService          | OnboardingService          | AddHttpClient  | Discovery → candidates → plans → execute (consume SCNO) |
+| IOnboardingService          | OnboardingService          | AddHttpClient  | Discovery → candidates → plans → approve → execute (SCNO)|
+| IScnoService                | ScnoService                | AddHttpClient  | Ciclo de vida SCNO: onboard/decommission (proxy directo)|
 
 ### Métodos clave de ILdapAuthService
 ```csharp
@@ -470,13 +482,15 @@ Task RemoveMenuFromRole(string gidNumber, int menuId)
 | Oxidized   | 172.16.20.13                                | Basic Auth       | `Oxidized:`               |
 | LibreNMS   | 172.16.20.10                                | X-Auth-Token     | `LibreNMS:`               |
 | Grafana    | 172.16.20.10:3000                           | Solo URL         | `Grafana:`                |
-| Netbox     | 172.16.20.11                                | Bearer Token     | `Netbox:`                 |
+| Netbox     | vía SCNO (`{Scno:BaseUrl}/api/v1/netbox`)   | Sin auth propia (proxy SCNO) | `Scno:` (la sección `Netbox:` queda como legado) |
 | PostgreSQL | 172.16.20.15                                | User/Pass        | `ConnectionStrings:`      |
 | WireGuard  | 172.16.20.12 (SSH :22)                      | SSH user/pass    | `WireGuard:`              |
 | Tailscale  | api.tailscale.com/api/v2/tailnet/{tailnet}  | Bearer ApiKey    | `Tailscale:`              |
 | SCNO       | `Scno:BaseUrl`                              | Headers X-SCNO-User / X-SCNO-Role | `Scno:`      |
 
-> **SCNO** (SuiteCore Network Orchestrator) es el servicio externo que orquesta SDN (OVS/OpenFlow/MikroTik), onboarding automático, correlación de eventos Graylog y auditoría de automatización. El backend actúa como **capa BFF/proxy**: los controllers Dashboard, Infrastructure, Network, Incidents, ReportsAudit, Sdn, SdnSupervision, VpnSupervision y Onboarding consumen el SCNO vía `AddHttpClient`. Varios endpoints de Onboarding son **proxy directo** (reenvían status+body sin transformar). Graylog y Proxmox se acceden indirectamente a través del SCNO, no por integración directa del backend.
+> **SCNO** (SuiteCore Network Orchestrator) es el servicio externo que orquesta SDN (OVS/OpenFlow/MikroTik), onboarding automático, correlación de eventos Graylog, auditoría de automatización **y el inventario Netbox**. El backend actúa como **capa BFF/proxy**: los controllers Dashboard, Infrastructure, Network, Incidents, ReportsAudit, Sdn, SdnSupervision, VpnSupervision, Onboarding, Scno **y Netbox** consumen el SCNO vía `AddHttpClient`. Varios endpoints de Onboarding y Scno son **proxy directo** (reenvían status+body sin transformar). Graylog, Proxmox y **Netbox** se acceden indirectamente a través del SCNO, no por integración directa del backend.
+
+> **Nota Netbox:** aunque `appsettings.json` conserva la sección `Netbox:` (Url + Token) como legado, `NetboxService` **ya no la usa** — lee `Scno:BaseUrl` y consulta `{Scno:BaseUrl}/api/v1/netbox/{recurso}`. El acceso es solo lectura (muestreo).
 
 ## Settings (IOptions<T>)
 
@@ -488,7 +502,7 @@ Task RemoveMenuFromRole(string gidNumber, int menuId)
 | OxidizedSettings   | `Oxidized:`         |                                               |
 | WireGuardSettings  | `WireGuard:`        | Host (172.16.20.12), Port (22), Username, Password, Interface (wg0) |
 | TailscaleSettings  | `Tailscale:`        | ApiKey (tskey-api-...), Tailnet (email o dominio) |
-| ScnoSettings       | `Scno:`             | BaseUrl, User (header X-SCNO-User), Role (header X-SCNO-Role) |
+| ScnoSettings       | `Scno:`             | BaseUrl, User (header X-SCNO-User), Role (header X-SCNO-Role), ApproverUser (X-SCNO-User al aprobar planes) |
 
 ## Gestión de Usuarios LDAP
 
@@ -563,15 +577,19 @@ El endpoint retorna bytes acumulativos + timestamp UTC. El frontend calcula:
 
 ```csharp
 LdapUser           ↔ LdapUserDto
-NetboxRegionResult ↔ NetboxRegionDto
-NetboxRegionResult ↔ NetboxRegionDetailDto
+NotificationChannel ↔ NotificationChannelDto (+ Create/Update)
+// Netbox — todos los recursos del muestreo mapean Result → Dto (ReverseMap):
 NetboxIpAddressResult ↔ NetboxIpAddressDto
-NetboxStatusResult ↔ NetboxStatusDto
+NetboxVlanResult / NetboxSiteResult / NetboxDeviceResult ↔ *Dto
+NetboxDeviceTypeResult / NetboxRackResult / NetboxManufacturerResult ↔ *Dto
+NetboxDeviceRoleResult / NetboxVirtualMachineResult / NetboxClusterResult ↔ *Dto
+// + tipos anidados: *NestedResult ↔ *NestedDto (Manufacturer, DeviceRole, Site, Rack, Cluster, ClusterType, PrimaryIp, IpFamily, StartOnBoot, RackWidth...)
+// Region/Cable/ModuleTypeProfile mantienen sus mapeos como legado
 ```
 
 ## Middleware Pipeline (Orden)
 
-1. Swagger UI (solo Development)
+1. Swagger UI (cuando NO es Production — `!IsProduction()`)
 2. HTTPS Redirection
 3. CORS (`AllowedOrigins`: localhost:5173)
 4. Authentication
@@ -598,7 +616,7 @@ NetboxStatusResult ↔ NetboxStatusDto
 - **Listo:** Registro de sesiones web en tabla `useractivities`
 - **Listo:** Paneles Grafana dinámicos desde tabla `grafanapanels`
 - **Listo:** Integración Oxidized — dispositivos, versiones, backups
-- **Listo:** Integración Netbox — CRUD completo: regiones, IPs, VLANs, cables, sitios, dispositivos, racks, fabricantes, roles, module-type-profiles (NetboxController `/api/netbox`)
+- **Listo:** Integración Netbox — **muestreo (solo lectura) vía SCNO** (`{Scno:BaseUrl}/api/v1/netbox/...`): IPs, VLANs, sitios, dispositivos, tipos de dispositivo, racks, fabricantes, roles, máquinas virtuales, clusters (NetboxController `/api/netbox`). **Cambio:** dejó de ser CRUD directo a la API de Netbox; ahora el SCNO es la fuente proxy del inventario
 - **Listo:** Integración LibreNMS — tipos de dispositivo
 - **Listo:** LDAP GetRoles() y GetUsersByGid() con campo IsActive
 - **Listo:** LDAP CreateUser, UpdateUser, DisableUser (soft-delete), EnableUser
@@ -610,14 +628,15 @@ NetboxStatusResult ↔ NetboxStatusDto
 - **Fix:** `LdapAuthService.GetRoles()` — se agregó `"description"` al `SearchRequest`; antes llegaba vacío porque LDAP solo retorna atributos explícitamente solicitados
 - **Listo:** Sistema de alertas — webhooks Grafana y LibreNMS → Telegram (AlertController + AlertService)
 - **Listo:** CRUD canales de notificación Telegram con test directo (NotificationChannelController)
-- **Listo:** Capa BFF/proxy hacia el SCNO — Dashboard, Infrastructure (Proxmox), Network (LibreNMS), Incidents (Graylog), ReportsAudit, Sdn (OVS/OpenFlow/MikroTik), SdnSupervision, VpnSupervision y Onboarding
+- **Listo:** Capa BFF/proxy hacia el SCNO — Dashboard, Infrastructure (Proxmox), Network (LibreNMS), Incidents (Graylog), ReportsAudit, Sdn (OVS/OpenFlow/MikroTik), SdnSupervision, VpnSupervision, Onboarding, **Netbox (muestreo)** y **Scno (ciclo de vida)**
 - **Listo:** Módulo SDN — health, topology, statistics, flows, info/interfaces MikroTik, block-ip (OpenFlow), automation/execute, webhook Graylog
-- **Listo:** Onboarding automático de dispositivos — discovery local (RouterOS) y Tailscale, generación de planes y ejecución con seguimiento de pasos
+- **Listo:** Onboarding automático de dispositivos — discovery local (RouterOS) y Tailscale, generación de planes, **aprobación** (`/plans/{planId}/approve`) y ejecución con seguimiento de pasos
+- **Listo:** ScnoController `/api/scno` — ciclo de vida del SCNO: `lifecycle/onboard` y `lifecycle/decommission` (proxy directo, IScnoService)
 - **Listo:** Auditoría de logs y eventos — eventos y security-events desde Graylog (Incidents) + historial de alertas y estado de auditoría (ReportsAudit)
 - **Listo:** MonitoringController — `grafana-embed-links` para embebido de paneles Grafana
 - **En progreso:** PermissionController — GET /api/permission/Menus activo, faltan endpoints de gestión (asignar/desasignar)
 - **Suspendido:** RADIUS Accounting-Start en login — RADIUS es para equipos de red, no sesiones web
-- **Pendiente (seguridad):** casi todos los controllers tienen `[Authorize]` comentado (`//[Authorize]`). Restaurar auth en Monitoring, Netbox, Alert, NotificationChannel, Vpn y en todos los controllers del SCNO (Dashboard, Infrastructure, Network, Incidents, ReportsAudit, Sdn, SdnSupervision, VpnSupervision, Onboarding). En SdnController los `[Authorize(Roles=...)]` de block-ip/automation también están comentados
+- **Pendiente (seguridad):** casi todos los controllers tienen `[Authorize]` comentado (`//[Authorize]`). Restaurar auth en Monitoring, Netbox, Alert, NotificationChannel, Vpn y en todos los controllers del SCNO (Dashboard, Infrastructure, Network, Incidents, ReportsAudit, Sdn, SdnSupervision, VpnSupervision, Onboarding, Scno). En SdnController los `[Authorize(Roles=...)]` de block-ip/automation también están comentados
 - **Pendiente:** Endpoints admin de gestión de roles-menús (AssignMenuToRole, RemoveMenuFromRole)
 
 ## Puertos Locales
@@ -627,4 +646,4 @@ NetboxStatusResult ↔ NetboxStatusDto
 | Dev (dotnet) | localhost:5182  | localhost:7073  |
 | IIS Express  | localhost:31819 | localhost:44356 |
 
-Swagger UI disponible en `/swagger` al correr en Development.
+Swagger UI disponible en `/swagger` en cualquier entorno que **no** sea Production (`!app.Environment.IsProduction()`).
