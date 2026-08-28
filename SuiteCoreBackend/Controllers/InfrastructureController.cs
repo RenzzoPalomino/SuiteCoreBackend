@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SuiteCoreBackend.Services.Interfaces;
 
@@ -5,7 +6,7 @@ namespace SuiteCoreBackend.Controllers
 {
     [ApiController]
     [Route("api/infrastructure")]
-    //[Authorize]
+    [Authorize]
     public class InfrastructureController : ControllerBase
     {
         private readonly IInfrastructureService _infrastructure;

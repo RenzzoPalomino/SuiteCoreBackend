@@ -7,6 +7,7 @@ namespace SuiteCoreBackend.Controllers;
 
 [ApiController]
 [Route("api/monitoring")]
+[Authorize]
 public class MonitoringController : ControllerBase
 {
     private readonly ILibreNmsService _service;
@@ -21,7 +22,6 @@ public class MonitoringController : ControllerBase
     }
 
     [HttpGet("device-types")]
-    //[Authorize]
     public async Task<IActionResult> GetDeviceTypes()
     {
         var result = await _service.GetDeviceTypesAsync();
@@ -29,7 +29,6 @@ public class MonitoringController : ControllerBase
     }
 
     [HttpGet("grafana-panels")]
-    //[Authorize]
     public async Task<IActionResult> GetGrafanaPanels()
     {
         try
@@ -44,7 +43,6 @@ public class MonitoringController : ControllerBase
     }
 
     [HttpGet("grafana-embed-links")]
-    //[Authorize]
     public async Task<IActionResult> GetGrafanaEmbedLinks()
     {
         try

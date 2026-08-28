@@ -6,7 +6,7 @@ namespace SuiteCoreBackend.Controllers
 {
     [ApiController]
     [Route("api/network")]
-    //[Authorize]
+    [Authorize]
     public class NetworkController : ControllerBase
     {
         private readonly INetworkService _network;

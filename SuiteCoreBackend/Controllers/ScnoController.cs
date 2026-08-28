@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SuiteCoreBackend.DTOs.Scno;
 using SuiteCoreBackend.Services.Interfaces;
@@ -6,7 +7,7 @@ namespace SuiteCoreBackend.Controllers
 {
     [ApiController]
     [Route("api/scno")]
-    //[Authorize]
+    [Authorize]
     public class ScnoController : ControllerBase
     {
         private readonly IScnoService _scno;

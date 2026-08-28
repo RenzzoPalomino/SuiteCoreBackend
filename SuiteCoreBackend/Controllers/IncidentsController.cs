@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using SuiteCoreBackend.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SuiteCoreBackend.Controllers
 {
     [ApiController]
     [Route("api/incidents")]
-    //[Authorize]
+    [Authorize]
     public class IncidentsController : ControllerBase
     {
         private readonly IIncidentsService _incidents;

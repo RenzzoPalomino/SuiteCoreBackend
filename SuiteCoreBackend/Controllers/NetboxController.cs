@@ -7,7 +7,7 @@ namespace SuiteCoreBackend.Controllers;
 
 [ApiController]
 [Route("api/netbox")]
-//[Authorize]
+[Authorize]
 public class NetboxController : ControllerBase
 {
     private readonly INetboxService _netboxService;

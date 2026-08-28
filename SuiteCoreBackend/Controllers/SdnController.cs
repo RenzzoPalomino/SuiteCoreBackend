@@ -8,7 +8,7 @@ namespace SuiteCoreBackend.Controllers
 {
     [ApiController]
     [Route("api/sdn")]
-    //[Authorize]
+    [Authorize]
     public class SdnController : ControllerBase
     {
         private readonly ISdnService _sdn;
